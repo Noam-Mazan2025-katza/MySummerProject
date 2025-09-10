@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="96dp"
+    android:background="#EEEEEE" android:layout_marginBottom="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:orientation="horizontal" android:padding="12dp">
+
+        <ImageView
+            android:id="@+id/ivAvatar"
+            android:layout_width="72dp" android:layout_height="match_parent"
+            android:background="#DDDDDD" android:scaleType="centerCrop"
+            android:contentDescription="Avatar" />
+
+        <LinearLayout
+            android:layout_width="192dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:paddingLeft="12dp">
+
+            <TextView
+                android:id="@+id/tvName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvPoints"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 נק׳" />
+
+        </LinearLayout>
+
+        <CheckBox
+            android:id="@+id/cbSelect"
+            android:layout_width="84dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="8dp" />
+
+    </LinearLayout>
+
+    <!-- Badge קטן בפינה -->
+    <TextView
+        android:id="@+id/tvBadge"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="🏅" android:textSize="22sp"
+        android:layout_gravity="top|end" android:layout_margin="6dp"
+        android:visibility="gone" />
+
+</FrameLayout>
