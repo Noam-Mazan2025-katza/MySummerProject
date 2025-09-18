@@ -37,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
 
         // כפתור +משתמש → פותח את מסך הוספת משתמש
         btnAddUser.setOnClickListener(v ->
-                startActivity(new Intent(MainActivity.this, AddUserActivity.class))
+                startActivity(new Intent(MainActivity.this, LoginActivity2.class))
         );
 
 

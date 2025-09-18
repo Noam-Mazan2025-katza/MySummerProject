@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "761035831917",
+    "project_id": "mysummerprojectauthentication",
+    "storage_bucket": "mysummerprojectauthentication.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:761035831917:android:1302d7467cffa1dd399d64",
+        "android_client_info": {
+          "package_name": "com.example.mysummerproject"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAGEkx1pSQ1drWh__ZnSGpjMRpq7tzLcYs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

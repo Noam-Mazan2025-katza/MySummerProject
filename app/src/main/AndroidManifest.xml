@@ -13,13 +13,17 @@
         android:theme="@style/Theme.MySummerProject"
         tools:targetApi="31">
         <activity
+            android:name=".LoginActivity2"
+            android:exported="false" />
+        <activity
             android:name=".AddWorkoutActivity"
             android:exported="true" />
         <activity
-
             android:name=".AddUserActivity"
             android:exported="true" />
-        <service android:name=".MusicService"
+
+        <service
+            android:name=".MusicService"
             android:exported="false" />
 
         <activity
