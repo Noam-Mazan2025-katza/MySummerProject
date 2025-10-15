@@ -1,18 +1,11 @@
 package com.example.mysummerproject;
 
-import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -22,49 +15,49 @@ import com.google.firebase.auth.FirebaseUser;
 
 public class LoginActivity2 extends AppCompatActivity {
 
-    private FirebaseAuth mAuth; // הצהרה על mAuth ברמת המחלקה
+    private static final String TAG = "LoginActivity2";
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        mAuth = FirebaseAuth.getInstance(); // אתחול של mAuth
-
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_login2);
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
+        // Initialize Firebase Auth (כמו בדוקו)
+        mAuth = FirebaseAuth.getInstance();
     }
 
     @Override
-    public void onStart() {
+    protected void onStart() {
         super.onStart();
-        // Check if user is signed in (non-null) and update UI accordingly.
+        // כמו בדוקו: בדיקה האם יש משתמש מחובר ועדכון UI
         FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser!=null)
-            updateUI(currentUser);
+        updateUI(currentUser);
     }
 
+    // מחובר לכפתור "Login" דרך android:onClick="login" ב-XML
     public void login(View view) {
+        // כאן מכניסים את ה-Custom Token שהשרת שלך יוצר בעזרת Firebase Admin SDK
+        String mCustomToken = "REPLACE_WITH_CUSTOM_TOKEN_FROM_YOUR_SERVER";
 
-    }
-    public void register(View view){
-        EditText emailEditText = findViewById(R.id.edittext_email);
-        EditText passwordEditText =findViewById(R.id.edittext_password);
-        mAuth.createUserWithEmailAndPassword(emailEditText.getText().toString(),passwordEditText.getText().toString())
+        mAuth.signInWithCustomToken(mCustomToken)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
+                    @Override public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
-                            startActivity(new Intent(LoginActivity2.this, AddWorkoutActivity.class))
+                            FirebaseUser user = mAuth.getCurrentUser();
+                            updateUI(user);
                         } else {
-                            Toast.makeText(LoginActivity2.this,  "register faild:(", Toast.LENGTH_LONG).show();
+                            Toast.makeText(LoginActivity2.this, "Authentication failed.",
+                                    Toast.LENGTH_SHORT).show();
+                            updateUI(null);
                         }
                     }
                 });
     }
+
+    // לא בשימוש ב-Custom Auth (השרת אחראי לאימות) — משאיר ריק כדי לא לשבור onClick ב-XML אם קיים
+    public void register(View view) { }
+
+    // בדיוק כמו בדוקו — אפשר להשאיר ריק או לממש בהמשך מעבר למסך הבא
+    private void updateUI(FirebaseUser user) { }
 }
