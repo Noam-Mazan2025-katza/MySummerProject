@@ -1,5 +1,6 @@
 package com.example.mysummerproject;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
@@ -23,21 +24,18 @@ public class LoginActivity2 extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login2);
 
-        // Initialize Firebase Auth (כמו בדוקו)
+        // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        // כמו בדוקו: בדיקה האם יש משתמש מחובר ועדכון UI
         FirebaseUser currentUser = mAuth.getCurrentUser();
         updateUI(currentUser);
     }
 
-    // מחובר לכפתור "Login" דרך android:onClick="login" ב-XML
     public void login(View view) {
-        // כאן מכניסים את ה-Custom Token שהשרת שלך יוצר בעזרת Firebase Admin SDK
         String mCustomToken = "REPLACE_WITH_CUSTOM_TOKEN_FROM_YOUR_SERVER";
 
         mAuth.signInWithCustomToken(mCustomToken)
@@ -55,9 +53,11 @@ public class LoginActivity2 extends AppCompatActivity {
                 });
     }
 
-    // לא בשימוש ב-Custom Auth (השרת אחראי לאימות) — משאיר ריק כדי לא לשבור onClick ב-XML אם קיים
-    public void register(View view) { }
+    // מחובר לכפתור Register ב־XML
+    public void register(View view) {
+        Intent intent = new Intent(LoginActivity2.this, Register.class);
+        startActivity(intent);
+    }
 
-    // בדיוק כמו בדוקו — אפשר להשאיר ריק או לממש בהמשך מעבר למסך הבא
     private void updateUI(FirebaseUser user) { }
 }

@@ -11,31 +11,28 @@
         android:id="@+id/Register_id"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="49dp"
         android:layout_marginTop="578dp"
-        android:layout_marginEnd="272dp"
         android:layout_marginBottom="105dp"
         android:onClick="register"
         android:text="Register"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0" />
 
     <Button
         android:id="@+id/Login_id"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="104dp"
-        android:layout_marginTop="578dp"
-        android:layout_marginEnd="72dp"
-        android:layout_marginBottom="105dp"
         android:onClick="login"
         android:text="Login"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/Register_id"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/edittext_password"
+        app:layout_constraintVertical_bias="0.102" />
 
     <EditText
         android:id="@+id/edittext_email"
@@ -62,4 +59,33 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.374" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="ברוך הבא לאתר"
+        android:textSize="48sp"
+        app:layout_constraintBottom_toTopOf="@+id/edittext_email"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="178dp"
+        android:layout_marginTop="141dp"
+        android:layout_marginEnd="175dp"
+        android:layout_marginBottom="29dp"
+        android:text="אם אין לך משתמש, תוכל להרשם בכפתור למטה"
+        app:layout_constraintBottom_toTopOf="@+id/Register_id"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.503"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/Login_id"
+        app:layout_constraintVertical_bias="0.0"
+        tools:textSize="16sp" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
