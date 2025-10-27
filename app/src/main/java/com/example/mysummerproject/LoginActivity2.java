@@ -3,6 +3,7 @@ package com.example.mysummerproject;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -16,48 +17,55 @@ import com.google.firebase.auth.FirebaseUser;
 
 public class LoginActivity2 extends AppCompatActivity {
 
-    private static final String TAG = "LoginActivity2";
     private FirebaseAuth mAuth;
+    private EditText etEmail, etPassword;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login2);
 
-        // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
-    }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        updateUI(currentUser);
+        etEmail = findViewById(R.id.edittext_email);
+        etPassword = findViewById(R.id.edittext_password);
     }
 
     public void login(View view) {
-        String mCustomToken = "REPLACE_WITH_CUSTOM_TOKEN_FROM_YOUR_SERVER";
+        String email = etEmail.getText().toString().trim();
+        String password = etPassword.getText().toString().trim();
 
-        mAuth.signInWithCustomToken(mCustomToken)
+        if (email.isEmpty() || password.isEmpty()) {
+            Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override public void onComplete(@NonNull Task<AuthResult> task) {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
                             FirebaseUser user = mAuth.getCurrentUser();
-                            updateUI(user);
-                        } else {
-                            Toast.makeText(LoginActivity2.this, "Authentication failed.",
+                            Toast.makeText(LoginActivity2.this,
+                                    "Welcome back " + user.getDisplayName(),
                                     Toast.LENGTH_SHORT).show();
-                            updateUI(null);
+
+                            // כאן תוכל לעבור למסך הראשי שלך:
+                            Intent intent = new Intent(LoginActivity2.this, MainActivity.class);
+                            startActivity(intent);
+                            finish();
+
+                        } else {
+                            Toast.makeText(LoginActivity2.this,
+                                    "Login failed: " + task.getException().getMessage(),
+                                    Toast.LENGTH_LONG).show();
                         }
                     }
                 });
     }
 
-    // מחובר לכפתור Register ב־XML
     public void register(View view) {
         Intent intent = new Intent(LoginActivity2.this, Register.class);
         startActivity(intent);
     }
-
-    private void updateUI(FirebaseUser user) { }
 }
