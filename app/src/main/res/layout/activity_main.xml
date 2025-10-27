@@ -4,51 +4,93 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/mainLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#FFFFFF">
 
-    <!-- אזור עליון: מתג + שורת כפתורים -->
+    <!-- 🔹 אזור עליון: תמונת פרופיל + שם משתמש + כפתור התנתקות -->
     <LinearLayout
         android:id="@+id/headerContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp"
+        android:padding="24dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
+        <!-- מתג מוזיקה --> <Switch
+        android:id="@+id/swMusic"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="מוזיקת אימון" />
 
-        <!-- מתג מוזיקה -->
-        <Switch
-            android:id="@+id/swMusic"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="מוזיקת אימון" />
-
-        <!-- שורת כפתורים: הוספת משתמש/אימון -->
+        <!-- שורה עליונה: תמונה + שם משתמש + כפתור התנתקות -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="8dp">
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <!-- 🔸 תמונת פרופיל -->
+            <ImageView
+                android:id="@+id/imgProfile"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:src="@drawable/sample_user_icon"
+                android:scaleType="centerCrop"
+                android:layout_marginEnd="12dp"
+                android:background="@drawable/profile_circle_bg"
+                android:contentDescription="Profile picture" />
+
+            <!-- 🔸 טקסט: המשתמש מחובר -->
+            <TextView
+                android:id="@+id/tvWelcome"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="המשתמש מחובר כעת"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#333333"
+                android:textAlignment="textStart" />
+
+            <!-- 🔸 כפתור התנתקות -->
+            <Button
+                android:id="@+id/btnLogout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="התנתק"
+                android:layout_marginStart="8dp" />
+        </LinearLayout>
+
+        <!-- 🔸 שורת כפתורים: הוספת משתמש / אימון -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="4dp"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp">
 
             <Button
                 android:id="@+id/btnAddUser"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="+ משתמש" />
+                android:text="+ משתמש"
+                android:layout_marginEnd="8dp" />
 
             <Button
                 android:id="@+id/btnAddWorkout"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="+ אימון"
-                android:layout_marginStart="8dp" />
+                android:text="+ אימון" />
         </LinearLayout>
     </LinearLayout>
 
-    <!-- רשימת המשתמשים גלילה: ScrollView + LinearLayout עם id=usersContainer -->
+    <!-- 🔹 רשימת המשתמשים גלילה -->
     <ScrollView
         android:id="@+id/scroll"
         android:layout_width="0dp"
@@ -65,10 +107,10 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="16dp"
-            android:paddingBottom="96dp" /> <!-- מרווח מתחת ל-FAB -->
+            android:paddingBottom="96dp" />
     </ScrollView>
 
-    <!-- כפתור צף למחיקת נבחרים בפינה הימנית-תחתונה -->
+    <!-- 🔹 כפתור צף למחיקת נבחרים -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabDelete"
         android:layout_width="wrap_content"

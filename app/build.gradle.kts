@@ -39,12 +39,15 @@ dependencies {
     // Firebase Auth ללא מספר גרסה (בגלל ה-BoM)
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-storage")
+    implementation("com.google.firebase:firebase-firestore")
 
     // שאר התלויות שלך
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
 
     // אל תשאיר את זו אם היא קיימת אצלך בליין נפרד – זה יוצר כפילות:
     // implementation(libs.firebase.auth)

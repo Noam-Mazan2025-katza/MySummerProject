@@ -51,14 +51,12 @@ public class Register extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_register);
 
-        // השורה שלך - Edge To Edge
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
-        // אתחול רכיבים
         etName = findViewById(R.id.etName);
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
@@ -141,13 +139,22 @@ public class Register extends AppCompatActivity {
     }
 
     private void uploadImageAndSaveProfile(FirebaseUser user, String name) {
-        StorageReference fileRef = storageRef.child("profile_pics/" + UUID.randomUUID().toString());
+        // 🔹 הצגת תיבת התקדמות בזמן העלאת תמונה
+        pd.setMessage("Uploading image...");
+        pd.show();
+
+        StorageReference fileRef = storageRef.child("profile_pics/" + UUID.randomUUID().toString() + ".jpg");
+
         fileRef.putFile(imageUri)
                 .addOnSuccessListener(taskSnapshot ->
-                        fileRef.getDownloadUrl().addOnSuccessListener(uri ->
-                                updateUserProfile(user, name, uri.toString())))
-                .addOnFailureListener(e ->
-                        Toast.makeText(Register.this, "Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                        fileRef.getDownloadUrl().addOnSuccessListener(uri -> {
+                            pd.dismiss();
+                            updateUserProfile(user, name, uri.toString());
+                        }))
+                .addOnFailureListener(e -> {
+                    pd.dismiss();
+                    Toast.makeText(Register.this, "Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void updateUserProfile(FirebaseUser user, String name, String photoUrl) {
@@ -160,6 +167,15 @@ public class Register extends AppCompatActivity {
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         Toast.makeText(Register.this, "Profile updated successfully!", Toast.LENGTH_SHORT).show();
+
+                        // 🔹 הצגת תמונת הפרופיל לאחר הרישום
+                        if (user.getPhotoUrl() != null) {
+                            imgProfile.setImageURI(user.getPhotoUrl());
+                        }
+
+                        // 🔹 מעבר אוטומטי למסך הלוגין
+                        Intent intent = new Intent(Register.this, LoginActivity2.class);
+                        startActivity(intent);
                         finish();
                     }
                 });

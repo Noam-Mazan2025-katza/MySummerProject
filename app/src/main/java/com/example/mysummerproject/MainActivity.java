@@ -1,62 +1,111 @@
 package com.example.mysummerproject;
+
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
-import android.content.Intent;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.*;
-import android.widget.*;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.*;
+import android.widget.*;
 
-import java.util.List;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.bumptech.glide.Glide;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
+
+    // משתנים שקשורים למשתמשים ולאימונים
     private LinearLayout usersContainer;
-    private Switch swMusic;
     private final List<String> selectedUsers = new ArrayList<>();
     private final Set<String> selectedNames = new HashSet<>();
 
+    // רכיבים חדשים של המשתמש המחובר
+    private TextView tvWelcome;
+    private ImageView imgProfile;
+    private Button btnLogout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // אתחול רכיבי המסך
         usersContainer = findViewById(R.id.usersContainer);
-        swMusic = findViewById(R.id.swMusic);
         Button btnAddUser = findViewById(R.id.btnAddUser);
         Button btnAddWorkout = findViewById(R.id.btnAddWorkout);
+        FloatingActionButton fabDelete = findViewById(R.id.fabDelete);
 
-        // כפתור +משתמש → פותח את מסך הוספת משתמש
+        // 🟢 רכיבי המשתמש המחובר
+        tvWelcome = findViewById(R.id.tvWelcome);
+        imgProfile = findViewById(R.id.imgProfile);
+        btnLogout = findViewById(R.id.btnLogout);
+
+        // --------------------------------------------------
+        //  חלק א' — בדיקת מצב המשתמש המחובר
+        // --------------------------------------------------
+        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+        FirebaseUser user = mAuth.getCurrentUser();
+
+        if (user != null) {
+            // אם יש משתמש מחובר
+            String name = user.getDisplayName();
+            if (name == null || name.isEmpty()) {
+                name = user.getEmail();
+            }
+
+            tvWelcome.setText("המשתמש " + name + " מחובר כעת ✅");
+
+            if (user.getPhotoUrl() != null) {
+                Glide.with(this)
+                        .load(user.getPhotoUrl())
+                        .placeholder(R.drawable.default_profile)
+                        .into(imgProfile);
+            } else {
+                imgProfile.setImageResource(R.drawable.default_profile);
+            }
+
+            btnLogout.setVisibility(View.VISIBLE);
+        } else {
+            // אם אין משתמש מחובר
+            tvWelcome.setText("אין משתמש מחובר ❌");
+            imgProfile.setImageResource(R.drawable.default_profile);
+            btnLogout.setVisibility(View.GONE);
+        }
+
+        // --------------------------------------------------
+        //  חלק ב' — פעולות התחברות / התנתקות
+        // --------------------------------------------------
+        btnLogout.setOnClickListener(v -> {
+            mAuth.signOut();
+            tvWelcome.setText("אין משתמש מחובר ❌");
+            imgProfile.setImageResource(R.drawable.default_profile);
+            btnLogout.setVisibility(View.GONE);
+            Toast.makeText(MainActivity.this, "התנתקת בהצלחה", Toast.LENGTH_SHORT).show();
+        });
+
+        // --------------------------------------------------
+        //  חלק ג' — ניווט בין מסכים
+        // --------------------------------------------------
         btnAddUser.setOnClickListener(v ->
                 startActivity(new Intent(MainActivity.this, LoginActivity2.class))
         );
-
 
         btnAddWorkout.setOnClickListener(v ->
                 startActivity(new Intent(MainActivity.this, AddWorkoutActivity.class))
         );
 
-
-        swMusic.setOnClickListener(v -> {
-            boolean on = swMusic.isChecked();
-            Intent s = new Intent(this, MusicService.class);
-            if (on) {
-                startService(s);
-            } else {
-                stopService(s);
-            }
-        });
-
-        // אם אין נתונים—ממלאים דמו פעם ראשונה
+        // --------------------------------------------------
+        //  חלק ד' — נתוני דמו ראשוניים
+        // --------------------------------------------------
         if (PrefsRepo.getUserNames(this).isEmpty()) {
             PrefsRepo.addUser(this, "נועה", null);
             PrefsRepo.addUser(this, "דוד", null);
@@ -64,75 +113,80 @@ public class MainActivity extends AppCompatActivity {
             PrefsRepo.addPoints(this, "דוד", 20);
             PrefsRepo.setBadge(this, "דוד", true);
         }
-        FloatingActionButton fabDelete = findViewById(R.id.fabDelete);
+
+        // --------------------------------------------------
+        //  חלק ה' — כפתור מחיקה
+        // --------------------------------------------------
         fabDelete.setOnClickListener(v -> {
             for (String name : new ArrayList<>(selectedUsers)) {
                 PrefsRepo.removeUsers(this, Collections.singleton(name));
             }
             PrefsRepo.removeUsers(this, selectedNames);
             selectedNames.clear();
-            renderLeaderboard();
             selectedUsers.clear();
             renderLeaderboard();
             Toast.makeText(this, "המשתמשים נמחקו", Toast.LENGTH_SHORT).show();
         });
-
     }
 
-    @Override protected void onResume() {
+    // --------------------------------------------------
+    //  חלק ו' — רענון הנתונים
+    // --------------------------------------------------
+    @Override
+    protected void onResume() {
         super.onResume();
         renderLeaderboard();
     }
 
+    // --------------------------------------------------
+    //  חלק ז' — יצירת רשימת המשתמשים
+    // --------------------------------------------------
     private void renderLeaderboard() {
         usersContainer.removeAllViews();
         for (PrefsRepo.User u : PrefsRepo.getUsersSorted(this)) {
             View card = getLayoutInflater().inflate(R.layout.view_user_card, usersContainer, false);
 
-            ImageView iv   = card.findViewById(R.id.ivAvatar);
+            ImageView iv = card.findViewById(R.id.ivAvatar);
             TextView tvName = card.findViewById(R.id.tvName);
-            TextView tvPts  = card.findViewById(R.id.tvPoints);
-            TextView tvBadge= card.findViewById(R.id.tvBadge);
-
+            TextView tvPts = card.findViewById(R.id.tvPoints);
+            TextView tvBadge = card.findViewById(R.id.tvBadge);
 
             tvName.setText(u.name);
             tvPts.setText(u.points + " נק׳");
-            if (u.avatarUri != null) iv.setImageURI(android.net.Uri.parse(u.avatarUri));
+            if (u.avatarUri != null)
+                iv.setImageURI(android.net.Uri.parse(u.avatarUri));
             tvBadge.setVisibility(u.badge ? View.VISIBLE : View.GONE);
 
-            // “עידוד” – לחיצה מוסיפה נקודה ושומרת
             card.setOnClickListener(v -> {
                 PrefsRepo.addPoints(this, u.name, 1);
                 renderLeaderboard();
             });
+
             CheckBox cb = card.findViewById(R.id.cbSelect);
             cb.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                if (isChecked) {
-                    selectedUsers.add(u.name);
-                } else {
-                    selectedUsers.remove(u.name);
-                }
+                if (isChecked) selectedUsers.add(u.name);
+                else selectedUsers.remove(u.name);
             });
-
-
 
             usersContainer.addView(card);
         }
     }
 
-
-    // תפריט (נשתמש בהמשך להגדרות)
-    @Override public boolean onCreateOptionsMenu(Menu menu) {
+    // --------------------------------------------------
+    //  חלק ח' — תפריט הגדרות
+    // --------------------------------------------------
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_menu, menu);
         return true;
     }
-    @Override public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.menu_settings) {
-            // startActivity(new Intent(this, SettingsActivity.class));
+            // בעתיד: startActivity(new Intent(this, SettingsActivity.class));
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
-
-
 }
