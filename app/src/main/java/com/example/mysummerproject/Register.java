@@ -2,8 +2,11 @@ package com.example.mysummerproject;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
@@ -17,8 +20,8 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.FirebaseNetworkException;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
@@ -27,10 +30,11 @@ import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.util.UUID;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 
 public class Register extends AppCompatActivity {
 
@@ -40,10 +44,10 @@ public class Register extends AppCompatActivity {
     private Uri imageUri;
 
     private FirebaseAuth refAuth;
-    private FirebaseStorage storage;
-    private StorageReference storageRef;
-
     private ProgressDialog pd;
+
+    private FirebaseFirestore db;
+    private CollectionReference refImages;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,8 +69,8 @@ public class Register extends AppCompatActivity {
         imgProfile = findViewById(R.id.imgProfile);
 
         refAuth = FirebaseAuth.getInstance();
-        storage = FirebaseStorage.getInstance();
-        storageRef = storage.getReference();
+        db = FirebaseFirestore.getInstance();
+        refImages = db.collection("images");
 
         pd = new ProgressDialog(this);
         pd.setTitle("Connecting");
@@ -86,8 +90,9 @@ public class Register extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 100 && data != null && data.getData() != null) {
+        if (requestCode == 100 && resultCode == RESULT_OK && data != null && data.getData() != null) {
             imageUri = data.getData();
+            Log.d("Register", "Selected image URI: " + imageUri.toString());
             imgProfile.setImageURI(imageUri);
         }
     }
@@ -99,85 +104,114 @@ public class Register extends AppCompatActivity {
 
         if (email.isEmpty() || pass.isEmpty() || name.isEmpty()) {
             Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
-        } else {
-            pd.show();
+            return;
+        }
 
-            refAuth.createUserWithEmailAndPassword(email, pass)
-                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                        @Override
-                        public void onComplete(@NonNull Task<AuthResult> task) {
-                            pd.dismiss();
+        pd.show();
 
-                            if (task.isSuccessful()) {
-                                FirebaseUser user = refAuth.getCurrentUser();
-
-                                if (imageUri != null) {
-                                    uploadImageAndSaveProfile(user, name);
-                                } else {
-                                    updateUserProfile(user, name, null);
-                                }
-
-                                Log.i("RegisterActivity", "User created successfully");
-                                Toast.makeText(Register.this, "User created successfully", Toast.LENGTH_SHORT).show();
+        refAuth.createUserWithEmailAndPassword(email, pass)
+                .addOnCompleteListener(task -> {
+                    pd.dismiss();
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = refAuth.getCurrentUser();
+                        if (user != null) {
+                            if (imageUri != null) {
+                                saveImageAndProfile(user, name);
                             } else {
-                                Exception exp = task.getException();
-                                if (exp instanceof FirebaseAuthWeakPasswordException) {
-                                    Toast.makeText(Register.this, "Password too weak", Toast.LENGTH_SHORT).show();
-                                } else if (exp instanceof FirebaseAuthUserCollisionException) {
-                                    Toast.makeText(Register.this, "User already exists", Toast.LENGTH_SHORT).show();
-                                } else if (exp instanceof FirebaseAuthInvalidCredentialsException) {
-                                    Toast.makeText(Register.this, "Invalid email address", Toast.LENGTH_SHORT).show();
-                                } else if (exp instanceof FirebaseNetworkException) {
-                                    Toast.makeText(Register.this, "Network error. Check connection.", Toast.LENGTH_SHORT).show();
-                                } else {
-                                    Toast.makeText(Register.this, "Error: " + exp.getMessage(), Toast.LENGTH_LONG).show();
-                                }
+                                updateUserProfile(user, name, null);
                             }
+                            Toast.makeText(Register.this, "User created successfully", Toast.LENGTH_SHORT).show();
                         }
+                    } else {
+                        Exception exp = task.getException();
+                        if (exp instanceof FirebaseAuthWeakPasswordException) {
+                            Toast.makeText(this, "Password too weak", Toast.LENGTH_SHORT).show();
+                        } else if (exp instanceof FirebaseAuthUserCollisionException) {
+                            Toast.makeText(this, "User already exists", Toast.LENGTH_SHORT).show();
+                        } else if (exp instanceof FirebaseAuthInvalidCredentialsException) {
+                            Toast.makeText(this, "Invalid email address", Toast.LENGTH_SHORT).show();
+                        } else if (exp instanceof FirebaseNetworkException) {
+                            Toast.makeText(this, "Network error. Check connection.", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(this, "Error: " + exp.getMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
+    }
+
+    private void saveImageAndProfile(FirebaseUser user, String name) {
+        try {
+            InputStream inputStream = getContentResolver().openInputStream(imageUri);
+            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+            byte[] compressed = compressImage(bitmap);
+
+            String base64Image = Base64.encodeToString(compressed, Base64.DEFAULT);
+
+            // שמירת תמונה ב-Firestore
+            refImages.document(user.getUid())
+                    .set(new UserImage(name, user.getEmail(), base64Image))
+                    .addOnSuccessListener(aVoid -> {
+                        updateUserProfile(user, name, null); // אין URL ל-Storage, נשאיר null
+                        Toast.makeText(this, "Image uploaded to Firestore!", Toast.LENGTH_SHORT).show();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Failed to upload image: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        updateUserProfile(user, name, null);
                     });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Failed to read image: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            updateUserProfile(user, name, null);
         }
     }
 
-    private void uploadImageAndSaveProfile(FirebaseUser user, String name) {
-        // 🔹 הצגת תיבת התקדמות בזמן העלאת תמונה
-        pd.setMessage("Uploading image...");
-        pd.show();
-
-        StorageReference fileRef = storageRef.child("profile_pics/" + UUID.randomUUID().toString() + ".jpg");
-
-        fileRef.putFile(imageUri)
-                .addOnSuccessListener(taskSnapshot ->
-                        fileRef.getDownloadUrl().addOnSuccessListener(uri -> {
-                            pd.dismiss();
-                            updateUserProfile(user, name, uri.toString());
-                        }))
-                .addOnFailureListener(e -> {
-                    pd.dismiss();
-                    Toast.makeText(Register.this, "Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
+    private byte[] compressImage(Bitmap imageBitmap) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] imageBytes = baos.toByteArray();
+        int maxSize = 1_048_576; // 1MB
+        int quality = 100;
+        while (imageBytes.length > maxSize && quality > 5) {
+            baos.reset();
+            quality -= 5;
+            imageBitmap.compress(Bitmap.CompressFormat.JPEG, quality, baos);
+            imageBytes = baos.toByteArray();
+        }
+        return imageBytes;
     }
 
     private void updateUserProfile(FirebaseUser user, String name, String photoUrl) {
         UserProfileChangeRequest.Builder builder = new UserProfileChangeRequest.Builder()
                 .setDisplayName(name);
-
         if (photoUrl != null) builder.setPhotoUri(Uri.parse(photoUrl));
 
         user.updateProfile(builder.build())
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        Toast.makeText(Register.this, "Profile updated successfully!", Toast.LENGTH_SHORT).show();
+                        user.reload();
+                        Toast.makeText(this, "Profile updated successfully!", Toast.LENGTH_SHORT).show();
 
-                        // 🔹 הצגת תמונת הפרופיל לאחר הרישום
-                        if (user.getPhotoUrl() != null) {
-                            imgProfile.setImageURI(user.getPhotoUrl());
-                        }
+                        PrefsRepo.addUser(this, name, null);
+                        PrefsRepo.addPoints(this, name, 0);
+                        PrefsRepo.setBadge(this, name, false);
 
-                        // 🔹 מעבר אוטומטי למסך הלוגין
-                        Intent intent = new Intent(Register.this, LoginActivity2.class);
-                        startActivity(intent);
+                        startActivity(new Intent(Register.this, MainActivity.class));
                         finish();
                     }
                 });
+    }
+
+    // 🔹 מחלקה פנימית עבור שמירת נתוני משתמש + תמונה ב-Firestore
+    private static class UserImage {
+        public String name;
+        public String email;
+        public String imageData; // Base64
+        public UserImage() {}
+        public UserImage(String name, String email, String imageData) {
+            this.name = name;
+            this.email = email;
+            this.imageData = imageData;
+        }
     }
 }

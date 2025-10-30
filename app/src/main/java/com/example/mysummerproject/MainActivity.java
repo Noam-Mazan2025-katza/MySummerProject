@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.*;
 import android.widget.*;
@@ -18,6 +19,7 @@ import com.bumptech.glide.Glide;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -61,8 +63,8 @@ public class MainActivity extends AppCompatActivity {
             if (name == null || name.isEmpty()) {
                 name = user.getEmail();
             }
-
-            tvWelcome.setText("המשתמש " + name + " מחובר כעת ✅");
+            user.reload(); // ⬅️ השורה הזאת טוענת מחדש את הנתונים מהשרת
+            tvWelcome.setText("שלום " + name  );
 
             if (user.getPhotoUrl() != null) {
                 Glide.with(this)
@@ -104,16 +106,7 @@ public class MainActivity extends AppCompatActivity {
         );
 
         // --------------------------------------------------
-        //  חלק ד' — נתוני דמו ראשוניים
-        // --------------------------------------------------
-        if (PrefsRepo.getUserNames(this).isEmpty()) {
-            PrefsRepo.addUser(this, "נועה", null);
-            PrefsRepo.addUser(this, "דוד", null);
-            PrefsRepo.addUser(this, "מאיה", null);
-            PrefsRepo.addPoints(this, "דוד", 20);
-            PrefsRepo.setBadge(this, "דוד", true);
-        }
-
+        renderLeaderboard();
         // --------------------------------------------------
         //  חלק ה' — כפתור מחיקה
         // --------------------------------------------------
@@ -171,6 +164,7 @@ public class MainActivity extends AppCompatActivity {
             usersContainer.addView(card);
         }
     }
+
 
     // --------------------------------------------------
     //  חלק ח' — תפריט הגדרות
