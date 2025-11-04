@@ -19,7 +19,6 @@ import com.bumptech.glide.Glide;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.UserProfileChangeRequest;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -52,20 +51,20 @@ public class MainActivity extends AppCompatActivity {
         btnLogout = findViewById(R.id.btnLogout);
 
         // --------------------------------------------------
-        //  חלק א' — בדיקת מצב המשתמש המחובר
+        // חלק א' — בדיקת מצב המשתמש המחובר
         // --------------------------------------------------
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         FirebaseUser user = mAuth.getCurrentUser();
 
         if (user != null) {
-            // אם יש משתמש מחובר
             String name = user.getDisplayName();
             if (name == null || name.isEmpty()) {
                 name = user.getEmail();
             }
-            user.reload(); // ⬅️ השורה הזאת טוענת מחדש את הנתונים מהשרת
-            tvWelcome.setText("שלום " + name  );
+            user.reload();
+            tvWelcome.setText("שלום " + name);
 
+            // 🔹 הצגת תמונת הפרופיל באמצעות Glide
             if (user.getPhotoUrl() != null) {
                 Glide.with(this)
                         .load(user.getPhotoUrl())
@@ -77,14 +76,13 @@ public class MainActivity extends AppCompatActivity {
 
             btnLogout.setVisibility(View.VISIBLE);
         } else {
-            // אם אין משתמש מחובר
             tvWelcome.setText("אין משתמש מחובר ❌");
             imgProfile.setImageResource(R.drawable.default_profile);
             btnLogout.setVisibility(View.GONE);
         }
 
         // --------------------------------------------------
-        //  חלק ב' — פעולות התחברות / התנתקות
+        // חלק ב' — פעולות התחברות / התנתקות
         // --------------------------------------------------
         btnLogout.setOnClickListener(v -> {
             mAuth.signOut();
@@ -95,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // --------------------------------------------------
-        //  חלק ג' — ניווט בין מסכים
+        // חלק ג' — ניווט בין מסכים
         // --------------------------------------------------
         btnAddUser.setOnClickListener(v ->
                 startActivity(new Intent(MainActivity.this, LoginActivity2.class))
@@ -108,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
         // --------------------------------------------------
         renderLeaderboard();
         // --------------------------------------------------
-        //  חלק ה' — כפתור מחיקה
+        // חלק ה' — כפתור מחיקה
         // --------------------------------------------------
         fabDelete.setOnClickListener(v -> {
             for (String name : new ArrayList<>(selectedUsers)) {
@@ -123,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // --------------------------------------------------
-    //  חלק ו' — רענון הנתונים
+    // חלק ו' — רענון הנתונים
     // --------------------------------------------------
     @Override
     protected void onResume() {
@@ -132,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // --------------------------------------------------
-    //  חלק ז' — יצירת רשימת המשתמשים
+    // חלק ז' — יצירת רשימת המשתמשים
     // --------------------------------------------------
     private void renderLeaderboard() {
         usersContainer.removeAllViews();
@@ -146,8 +144,17 @@ public class MainActivity extends AppCompatActivity {
 
             tvName.setText(u.name);
             tvPts.setText(u.points + " נק׳");
-            if (u.avatarUri != null)
-                iv.setImageURI(android.net.Uri.parse(u.avatarUri));
+
+            // 🔹 שימוש ב-Glide להצגת תמונת המשתמש בריבועים
+            if (u.avatarUri != null) {
+                Glide.with(this)
+                        .load(u.avatarUri)
+                        .placeholder(R.drawable.default_profile)
+                        .into(iv);
+            } else {
+                iv.setImageResource(R.drawable.default_profile);
+            }
+
             tvBadge.setVisibility(u.badge ? View.VISIBLE : View.GONE);
 
             card.setOnClickListener(v -> {
@@ -165,9 +172,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     // --------------------------------------------------
-    //  חלק ח' — תפריט הגדרות
+    // חלק ח' — תפריט הגדרות
     // --------------------------------------------------
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

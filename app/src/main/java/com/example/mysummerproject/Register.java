@@ -147,17 +147,18 @@ public class Register extends AppCompatActivity {
 
             String base64Image = Base64.encodeToString(compressed, Base64.DEFAULT);
 
-            // שמירת תמונה ב-Firestore
             refImages.document(user.getUid())
                     .set(new UserImage(name, user.getEmail(), base64Image))
                     .addOnSuccessListener(aVoid -> {
-                        updateUserProfile(user, name, null); // אין URL ל-Storage, נשאיר null
+                        updateUserProfile(user, name, imageUri.toString()); // ✅ עדכון הפרופיל כולל שמירה בלוקל
                         Toast.makeText(this, "Image uploaded to Firestore!", Toast.LENGTH_SHORT).show();
                     })
+
                     .addOnFailureListener(e -> {
                         Toast.makeText(this, "Failed to upload image: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        updateUserProfile(user, name, null);
+                        updateUserProfile(user, name, imageUri.toString());
                     });
+
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -184,7 +185,10 @@ public class Register extends AppCompatActivity {
     private void updateUserProfile(FirebaseUser user, String name, String photoUrl) {
         UserProfileChangeRequest.Builder builder = new UserProfileChangeRequest.Builder()
                 .setDisplayName(name);
-        if (photoUrl != null) builder.setPhotoUri(Uri.parse(photoUrl));
+
+        if (photoUrl != null && !photoUrl.isEmpty()) {
+            builder.setPhotoUri(Uri.parse(photoUrl));
+        }
 
         user.updateProfile(builder.build())
                 .addOnCompleteListener(task -> {
@@ -192,15 +196,18 @@ public class Register extends AppCompatActivity {
                         user.reload();
                         Toast.makeText(this, "Profile updated successfully!", Toast.LENGTH_SHORT).show();
 
-                        PrefsRepo.addUser(this, name, null);
+                        // שמירה בלוקל עם הכתובת הנכונה של התמונה
+                        PrefsRepo.addUser(this, name, photoUrl != null ? Uri.parse(photoUrl) : null);
                         PrefsRepo.addPoints(this, name, 0);
                         PrefsRepo.setBadge(this, name, false);
+
 
                         startActivity(new Intent(Register.this, MainActivity.class));
                         finish();
                     }
                 });
     }
+
 
     // 🔹 מחלקה פנימית עבור שמירת נתוני משתמש + תמונה ב-Firestore
     private static class UserImage {
