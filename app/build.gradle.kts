@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.google.gms.google.services)
+
 }
 
 android {
@@ -40,7 +41,7 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-storage")
     implementation("com.google.firebase:firebase-firestore")
-
+    implementation("com.google.android.material:material:1.9.0")
     // שאר התלויות שלך
     implementation(libs.appcompat)
     implementation(libs.material)

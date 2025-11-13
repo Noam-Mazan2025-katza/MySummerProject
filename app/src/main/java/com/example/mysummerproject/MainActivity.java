@@ -5,6 +5,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import androidx.appcompat.widget.Toolbar;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+
 
 import android.content.Intent;
 import android.net.Uri;
@@ -13,16 +16,21 @@ import android.view.*;
 import android.widget.*;
 
 import androidx.annotation.NonNull;
+
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
+    private DrawerLayout drawerLayout;
+    private NavigationView navigationView;
 
     // משתנים שקשורים למשתמשים ולאימונים
     private LinearLayout usersContainer;
@@ -44,27 +52,43 @@ public class MainActivity extends AppCompatActivity {
         Button btnAddUser = findViewById(R.id.btnAddUser);
         Button btnAddWorkout = findViewById(R.id.btnAddWorkout);
         FloatingActionButton fabDelete = findViewById(R.id.fabDelete);
+        drawerLayout = findViewById(R.id.drawerLayout);
+        navigationView = findViewById(R.id.navigationView);
+
 
         // 🟢 רכיבי המשתמש המחובר
         tvWelcome = findViewById(R.id.tvWelcome);
         imgProfile = findViewById(R.id.imgProfile);
         btnLogout = findViewById(R.id.btnLogout);
 
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawerLayout, toolbar,
+                R.string.navigation_drawer_open,
+                R.string.navigation_drawer_close);
+        drawerLayout.addDrawerListener(toggle);
+        toggle.syncState();
         // --------------------------------------------------
         // חלק א' — בדיקת מצב המשתמש המחובר
         // --------------------------------------------------
+        View headerView = navigationView.getHeaderView(0);
+        ImageView navProfileImage = headerView.findViewById(R.id.navHeaderProfileImage);
+        TextView navName = headerView.findViewById(R.id.navHeaderName);
+
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         FirebaseUser user = mAuth.getCurrentUser();
 
         if (user != null) {
+            // שם המשתמש
             String name = user.getDisplayName();
             if (name == null || name.isEmpty()) {
                 name = user.getEmail();
             }
-            user.reload();
-            tvWelcome.setText("שלום " + name);
 
-            // 🔹 הצגת תמונת הפרופיל באמצעות Glide
+            // עדכון MainActivity
+            tvWelcome.setText("שלום " + name);
             if (user.getPhotoUrl() != null) {
                 Glide.with(this)
                         .load(user.getPhotoUrl())
@@ -73,14 +97,28 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 imgProfile.setImageResource(R.drawable.default_profile);
             }
-
             btnLogout.setVisibility(View.VISIBLE);
+
+            // עדכון Navigation Drawer
+            navName.setText(name);
+            if (user.getPhotoUrl() != null) {
+                Glide.with(this)
+                        .load(user.getPhotoUrl())
+                        .placeholder(R.drawable.default_profile)
+                        .into(navProfileImage);
+            } else {
+                navProfileImage.setImageResource(R.drawable.default_profile);
+            }
+
         } else {
+            // משתמש לא מחובר
             tvWelcome.setText("אין משתמש מחובר ❌");
             imgProfile.setImageResource(R.drawable.default_profile);
             btnLogout.setVisibility(View.GONE);
-        }
 
+            navName.setText("אין משתמש מחובר ❌");
+            navProfileImage.setImageResource(R.drawable.default_profile);
+        }
         // --------------------------------------------------
         // חלק ב' — פעולות התחברות / התנתקות
         // --------------------------------------------------

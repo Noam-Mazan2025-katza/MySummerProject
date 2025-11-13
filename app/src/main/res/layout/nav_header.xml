@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="160dp"
+    android:background="#FC4C02"
+    android:gravity="bottom">
+
+    <!-- תמונת פרופיל -->
+    <ImageView
+        android:id="@+id/navHeaderProfileImage"        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:src="@drawable/sample_user_icon"
+        android:scaleType="centerCrop"
+        android:background="@drawable/profile_circle_bg" />
+
+    <!-- שם המשתמש -->
+    <TextView
+        android:id="@+id/navHeaderName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="שלום משתמש"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginTop="8dp"/>
+</LinearLayout>

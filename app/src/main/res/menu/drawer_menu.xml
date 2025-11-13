@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+        <item android:id="@+id/nav_home" android:title="בית"/>
+        <item android:id="@+id/nav_workouts" android:title="אימונים"/>
+        <item android:id="@+id/nav_maps" android:title="מפות"/>
+        <item android:id="@+id/nav_challenges" android:title="אתגרים"/>
+        <item android:id="@+id/nav_register" android:title="להרשם"/>
+        <item android:id="@+id/nav_login" android:title="להתחבר"/>
+        <item android:id="@+id/nav_help" android:title="עזרה"/>
+    </group>
+</menu>

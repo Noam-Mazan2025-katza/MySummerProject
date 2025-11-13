@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">MySummerProject</string>
+    <string name="navigation_drawer_open">פתח תפריט</string>
+    <string name="navigation_drawer_close">סגור תפריט</string>
 </resources>
