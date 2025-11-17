@@ -17,7 +17,6 @@ import android.widget.*;
 
 import androidx.annotation.NonNull;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.bumptech.glide.Glide;
@@ -26,7 +25,7 @@ import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity{
 
     private static final String TAG = "MainActivity";
     private DrawerLayout drawerLayout;
@@ -46,6 +45,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        setContentView(R.layout.base_layout);
+        setupMenu();
+        setContentLayout(R.layout.activity_main);
+
 
         // אתחול רכיבי המסך
         usersContainer = findViewById(R.id.usersContainer);
@@ -60,7 +63,9 @@ public class MainActivity extends AppCompatActivity {
         tvWelcome = findViewById(R.id.tvWelcome);
         imgProfile = findViewById(R.id.imgProfile);
         btnLogout = findViewById(R.id.btnLogout);
-
+        // --------------------------------------------------
+        // הוספת תפריט לדף
+        // --------------------------------------------------
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -70,6 +75,40 @@ public class MainActivity extends AppCompatActivity {
                 R.string.navigation_drawer_close);
         drawerLayout.addDrawerListener(toggle);
         toggle.syncState();
+
+        // --------------------------------------------------
+// חלק ניווט - לחיצה על פריטים בתפריט הצד
+// --------------------------------------------------
+        navigationView.setNavigationItemSelectedListener(item -> {
+
+            int id = item.getItemId();
+
+            if (id == R.id.nav_home) {
+                // בית = MainActivity
+                Intent intent = new Intent(MainActivity.this, MainActivity.class);
+                startActivity(intent);
+
+            } else if (id == R.id.nav_workouts) {
+                Intent intent = new Intent(MainActivity.this, AddWorkoutActivity.class);
+                startActivity(intent);
+
+
+
+            } else if (id == R.id.nav_login) {
+                Intent intent = new Intent(MainActivity.this, LoginActivity2.class);
+                startActivity(intent);
+
+            } else if (id == R.id.nav_help) {
+                Intent intent = new Intent(Intent.ACTION_VIEW,
+                        Uri.parse("https://support.strava.com"));
+                startActivity(intent);
+            }
+
+            drawerLayout.closeDrawers(); // לסגור את התפריט לאחר לחיצה
+            return true;
+        });
+
+
         // --------------------------------------------------
         // חלק א' — בדיקת מצב המשתמש המחובר
         // --------------------------------------------------
@@ -156,6 +195,8 @@ public class MainActivity extends AppCompatActivity {
             renderLeaderboard();
             Toast.makeText(this, "המשתמשים נמחקו", Toast.LENGTH_SHORT).show();
         });
+
+
     }
 
     // --------------------------------------------------
@@ -209,6 +250,8 @@ public class MainActivity extends AppCompatActivity {
             usersContainer.addView(card);
         }
     }
+
+
 
     // --------------------------------------------------
     // חלק ח' — תפריט הגדרות

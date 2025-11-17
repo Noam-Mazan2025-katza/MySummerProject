@@ -36,7 +36,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
-public class Register extends AppCompatActivity {
+public class Register extends BaseActivity {
 
     private EditText etName, etEmail, etPassword;
     private Button btnSelectImage, btnRegister;
@@ -53,7 +53,12 @@ public class Register extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
+
+
         setContentView(R.layout.activity_register);
+        setContentView(R.layout.base_layout);
+        setupMenu();
+        setContentLayout(R.layout.activity_register);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());

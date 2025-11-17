@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class LoginActivity2 extends AppCompatActivity {
+public class LoginActivity2 extends BaseActivity {
 
     private FirebaseAuth mAuth;
     private EditText etEmail, etPassword;
@@ -31,6 +31,9 @@ public class LoginActivity2 extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login2);
+        setContentView(R.layout.base_layout);
+        setupMenu();
+        setContentLayout(R.layout.activity_login2);
 
         mAuth = FirebaseAuth.getInstance();
 

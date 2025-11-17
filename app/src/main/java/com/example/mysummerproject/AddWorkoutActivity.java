@@ -10,7 +10,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import java.util.List;
 
-public class AddWorkoutActivity extends AppCompatActivity {
+public class AddWorkoutActivity extends BaseActivity {
     private Spinner spUser, spType;
     private SeekBar sbMinutes;
     private TextView tvMinutes;
@@ -19,12 +19,18 @@ public class AddWorkoutActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_workout);
+        setContentView(R.layout.base_layout);
+        setupMenu();
+        setContentLayout(R.layout.activity_add_workout);
+
 
         spUser = findViewById(R.id.spUser);
         spType = findViewById(R.id.spType);
         sbMinutes = findViewById(R.id.sbMinutes);
         tvMinutes = findViewById(R.id.tvMinutes);
         Button btnSave = findViewById(R.id.btnSaveWorkout); // ← היה בהערה: להחזיר!
+
+
 
         // משתמשים מהרשימה השמורה
         List<String> names = PrefsRepo.getUserNames(this);
