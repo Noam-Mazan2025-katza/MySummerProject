@@ -7,46 +7,47 @@ import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
 import java.util.List;
 
 public class AddWorkoutActivity extends BaseActivity {
-    private Spinner spUser, spType;
+
+    private Spinner spType;
     private SeekBar sbMinutes;
     private TextView tvMinutes;
+
+    private FirebaseUser fbUser;
+    private String loggedUserEmail;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_add_workout);
-        setContentView(R.layout.base_layout);
-        setupMenu();
+
+        // ❗ רק זה! לא setContentView פעמיים
         setContentLayout(R.layout.activity_add_workout);
 
+        setupMenu();
 
-        spUser = findViewById(R.id.spUser);
         spType = findViewById(R.id.spType);
         sbMinutes = findViewById(R.id.sbMinutes);
         tvMinutes = findViewById(R.id.tvMinutes);
-        Button btnSave = findViewById(R.id.btnSaveWorkout); // ← היה בהערה: להחזיר!
+        Button btnSave = findViewById(R.id.btnSaveWorkout);
 
-
-
-        // משתמשים מהרשימה השמורה
-        List<String> names = PrefsRepo.getUserNames(this);
-        if (names.isEmpty()) {
-            Toast.makeText(this, "אין משתמשים. צור משתמש קודם.", Toast.LENGTH_SHORT).show();
+        fbUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (fbUser == null) {
+            Toast.makeText(this, "אין משתמש מחובר", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        // מתאם ל-Spinner של משתמשים
-        ArrayAdapter<String> usersAdapter =
-                new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, names);
-        usersAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spUser.setAdapter(usersAdapter);
+        loggedUserEmail = fbUser.getEmail();
 
-        // סוגי אימון
+        // סוגי אימונים
         ArrayAdapter<String> typeAdapter =
                 new ArrayAdapter<>(this, android.R.layout.simple_spinner_item,
                         new String[]{"Run", "Bike", "Strength"});
@@ -55,28 +56,41 @@ public class AddWorkoutActivity extends BaseActivity {
 
         // עדכון טקסט הדקות
         tvMinutes.setText(sbMinutes.getProgress() + " דקות");
+
         sbMinutes.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override public void onProgressChanged(SeekBar seekBar, int p, boolean fromUser) {
-                tvMinutes.setText(p + " דקות");
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                tvMinutes.setText(progress + " דקות");
             }
             @Override public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override public void onStopTrackingTouch(SeekBar seekBar) {}
         });
 
+        // שמירת אימון
         btnSave.setOnClickListener(v -> {
-            String user = (String) spUser.getSelectedItem();
-            int minutes = sbMinutes.getProgress();
-            int score = Math.max(1, minutes); // מינימום נקודה אחת
 
-            PrefsRepo.addPoints(this, user, score);
-            if (minutes >= 30) {
-                PrefsRepo.setBadge(this, user, true); // מעניק Badge לדוגמה
+            String type = spType.getSelectedItem().toString();
+            int minutes = sbMinutes.getProgress();
+
+            int multiplier = 1;
+            switch (type) {
+                case "Run": multiplier = 3; break;
+                case "Bike": multiplier = 2; break;
+                case "Strength": multiplier = 5; break;
             }
 
-            // עדיף להשתמש במחרוזת מהמשאבים או עברית ישירה בקידוד UTF-8
-            Toast.makeText(this, "נשמר: +" + score + " נק׳ ל-" + user, Toast.LENGTH_SHORT).show();
+            int score = Math.max(1, minutes * multiplier);
+
+            // מוסיף נקודות למשתמש שמחובר
+            String loggedUserName = fbUser.getDisplayName();
+            if (loggedUserName == null || loggedUserName.isEmpty()) {
+                loggedUserName = fbUser.getEmail(); // או תן למשתמש שם קודם
+            }
+            PrefsRepo.addPoints(this, loggedUserName, score);
+
+
+            Toast.makeText(this, "נשמר: +" + score + " נקודות", Toast.LENGTH_SHORT).show();
             finish();
         });
     }
-
 }

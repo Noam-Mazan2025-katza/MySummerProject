@@ -73,6 +73,7 @@ public class LoginActivity2 extends BaseActivity {
                     }
                 });
     }
+
     public void register(View view) {
         Intent intent = new Intent(LoginActivity2.this, Register.class);
         startActivity(intent);

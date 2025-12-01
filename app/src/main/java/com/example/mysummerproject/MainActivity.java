@@ -30,16 +30,19 @@ public class MainActivity extends BaseActivity{
     private static final String TAG = "MainActivity";
     private DrawerLayout drawerLayout;
     private NavigationView navigationView;
+    private FirebaseAuth mAuth; // ⬅️ הועבר לפה (תיקון 1)
 
     // משתנים שקשורים למשתמשים ולאימונים
     private LinearLayout usersContainer;
     private final List<String> selectedUsers = new ArrayList<>();
     private final Set<String> selectedNames = new HashSet<>();
 
-    // רכיבים חדשים של המשתמש המחובר
+    // רכיבים של המשתמש המחובר
     private TextView tvWelcome;
     private ImageView imgProfile;
     private Button btnLogout;
+    private Button btnAddUser; // ⬅️ הועבר לפה (תיקון 1)
+    private Button btnAddWorkout; // ⬅️ הועבר לפה (תיקון 1)
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,14 +53,18 @@ public class MainActivity extends BaseActivity{
         setContentLayout(R.layout.activity_main);
 
 
-        // אתחול רכיבי המסך
+        // ⭐️ תיקון 2: ביטול הרווח העליון (Status Bar) ⭐️
+        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+
+
+        // אתחול רכיבי המסך (עכשיו כמשתני מחלקה)
         usersContainer = findViewById(R.id.usersContainer);
-        Button btnAddUser = findViewById(R.id.btnAddUser);
-        Button btnAddWorkout = findViewById(R.id.btnAddWorkout);
+        btnAddUser = findViewById(R.id.btnAddUser); // ⬅️ אתחול
+        btnAddWorkout = findViewById(R.id.btnAddWorkout); // ⬅️ אתחול
         FloatingActionButton fabDelete = findViewById(R.id.fabDelete);
         drawerLayout = findViewById(R.id.drawerLayout);
         navigationView = findViewById(R.id.navigationView);
-
+        mAuth = FirebaseAuth.getInstance(); // ⬅️ אתחול mAuth
 
         // 🟢 רכיבי המשתמש המחובר
         tvWelcome = findViewById(R.id.tvWelcome);
@@ -77,8 +84,8 @@ public class MainActivity extends BaseActivity{
         toggle.syncState();
 
         // --------------------------------------------------
-// חלק ניווט - לחיצה על פריטים בתפריט הצד
-// --------------------------------------------------
+        // חלק ניווט - לחיצה על פריטים בתפריט הצד
+        // --------------------------------------------------
         navigationView.setNavigationItemSelectedListener(item -> {
 
             int id = item.getItemId();
@@ -91,8 +98,6 @@ public class MainActivity extends BaseActivity{
             } else if (id == R.id.nav_workouts) {
                 Intent intent = new Intent(MainActivity.this, AddWorkoutActivity.class);
                 startActivity(intent);
-
-
 
             } else if (id == R.id.nav_login) {
                 Intent intent = new Intent(MainActivity.this, LoginActivity2.class);
@@ -110,63 +115,21 @@ public class MainActivity extends BaseActivity{
 
 
         // --------------------------------------------------
-        // חלק א' — בדיקת מצב המשתמש המחובר
+        // ⭐️ חלק א' — קריאה לפונקציית עדכון משתמש (במקום הלוגיקה המבולגנת) ⭐️
         // --------------------------------------------------
-        View headerView = navigationView.getHeaderView(0);
-        ImageView navProfileImage = headerView.findViewById(R.id.navHeaderProfileImage);
-        TextView navName = headerView.findViewById(R.id.navHeaderName);
+        updateUserUI(); // ⬅️ קריאה ראשונית לאתחול המצב
+        // --------------------------------------------------
+        // הוסר כל הבלוק if/else שהיה בבדיקת המשתמש!
+        // --------------------------------------------------
 
-        FirebaseAuth mAuth = FirebaseAuth.getInstance();
-        FirebaseUser user = mAuth.getCurrentUser();
 
-        if (user != null) {
-            // שם המשתמש
-            String name = user.getDisplayName();
-            if (name == null || name.isEmpty()) {
-                name = user.getEmail();
-            }
-
-            // עדכון MainActivity
-            tvWelcome.setText("שלום " + name);
-            if (user.getPhotoUrl() != null) {
-                Glide.with(this)
-                        .load(user.getPhotoUrl())
-                        .placeholder(R.drawable.default_profile)
-                        .into(imgProfile);
-            } else {
-                imgProfile.setImageResource(R.drawable.default_profile);
-            }
-            btnLogout.setVisibility(View.VISIBLE);
-
-            // עדכון Navigation Drawer
-            navName.setText(name);
-            if (user.getPhotoUrl() != null) {
-                Glide.with(this)
-                        .load(user.getPhotoUrl())
-                        .placeholder(R.drawable.default_profile)
-                        .into(navProfileImage);
-            } else {
-                navProfileImage.setImageResource(R.drawable.default_profile);
-            }
-
-        } else {
-            // משתמש לא מחובר
-            tvWelcome.setText("אין משתמש מחובר ❌");
-            imgProfile.setImageResource(R.drawable.default_profile);
-            btnLogout.setVisibility(View.GONE);
-
-            navName.setText("אין משתמש מחובר ❌");
-            navProfileImage.setImageResource(R.drawable.default_profile);
-        }
         // --------------------------------------------------
         // חלק ב' — פעולות התחברות / התנתקות
         // --------------------------------------------------
         btnLogout.setOnClickListener(v -> {
             mAuth.signOut();
-            tvWelcome.setText("אין משתמש מחובר ❌");
-            imgProfile.setImageResource(R.drawable.default_profile);
-            btnLogout.setVisibility(View.GONE);
             Toast.makeText(MainActivity.this, "התנתקת בהצלחה", Toast.LENGTH_SHORT).show();
+            updateUserUI(); // ⬅️ עדכון הממשק מייד לאחר ההתנתקות
         });
 
         // --------------------------------------------------
@@ -195,17 +158,75 @@ public class MainActivity extends BaseActivity{
             renderLeaderboard();
             Toast.makeText(this, "המשתמשים נמחקו", Toast.LENGTH_SHORT).show();
         });
-
-
     }
 
     // --------------------------------------------------
-    // חלק ו' — רענון הנתונים
+    // ⭐️ תיקון 3: רענון הנתונים ב-onResume() ⭐️
     // --------------------------------------------------
     @Override
     protected void onResume() {
         super.onResume();
+        updateUserUI(); // ⬅️ קריאה נוספת בכל פעם שחוזרים למסך, כולל מה-LoginActivity
         renderLeaderboard();
+    }
+
+    // --------------------------------------------------
+    // ⭐️ תיקון 4: פונקציית עדכון המשתמש המאוחדת ⭐️
+    // --------------------------------------------------
+    private void updateUserUI() {
+        FirebaseUser user = mAuth.getCurrentUser();
+
+        // רכיבים מתוך תפריט הצד (Navigation Drawer)
+        View headerView = navigationView.getHeaderView(0);
+        ImageView navProfileImage = headerView.findViewById(R.id.navHeaderProfileImage);
+        TextView navName = headerView.findViewById(R.id.navHeaderName);
+
+        if (user != null) {
+            // משתמש מחובר
+
+            // 1. הסתרת כפתור הוספת משתמש
+            if (btnAddUser != null) {
+                btnAddUser.setVisibility(View.GONE);
+            }
+
+            // 2. עדכון פרטים במסך הראשי
+            String name = user.getDisplayName();
+            if (name == null || name.isEmpty()) {
+                name = user.getEmail();
+            }
+            tvWelcome.setText("שלום " + name);
+            if (user.getPhotoUrl() != null) {
+                Glide.with(this).load(user.getPhotoUrl()).placeholder(R.drawable.default_profile).into(imgProfile);
+            } else {
+                imgProfile.setImageResource(R.drawable.default_profile);
+            }
+            btnLogout.setVisibility(View.VISIBLE);
+
+            // 3. עדכון פרטים בניווט צד
+            navName.setText(name);
+            if (user.getPhotoUrl() != null) {
+                Glide.with(this).load(user.getPhotoUrl()).placeholder(R.drawable.default_profile).into(navProfileImage);
+            } else {
+                navProfileImage.setImageResource(R.drawable.default_profile);
+            }
+
+        } else {
+            // משתמש לא מחובר
+
+            // 1. הצגת כפתור הוספת משתמש
+            if (btnAddUser != null) {
+                btnAddUser.setVisibility(View.VISIBLE);
+            }
+
+            // 2. עדכון פרטים במסך הראשי
+            tvWelcome.setText("אין משתמש מחובר ❌");
+            imgProfile.setImageResource(R.drawable.default_profile);
+            btnLogout.setVisibility(View.GONE);
+
+            // 3. עדכון פרטים בניווט צד
+            navName.setText("אין משתמש מחובר ❌");
+            navProfileImage.setImageResource(R.drawable.default_profile);
+        }
     }
 
     // --------------------------------------------------
@@ -250,7 +271,6 @@ public class MainActivity extends BaseActivity{
             usersContainer.addView(card);
         }
     }
-
 
 
     // --------------------------------------------------
