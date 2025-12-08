@@ -84,10 +84,16 @@ public class MenuActivity extends AppCompatActivity {
         navigationView.setNavigationItemSelectedListener(item -> {
             int id = item.getItemId();
 
-            if (id == R.id.nav_home) startActivity(new Intent(this, MainActivity.class));
+            if (id == R.id.nav_home)
+                startActivity(new Intent(this, MainActivity.class));
             else if (id == R.id.nav_workouts)
                 startActivity(new Intent(this, AddWorkoutActivity.class));
-            else if (id == R.id.nav_login) startActivity(new Intent(this, LoginActivity2.class));
+            else if(id == R.id.nav_challenges) {
+                // התיקון כאן: הפניה ל-Activity ולא ל-Model
+                startActivity(new Intent(this, ChallengesActivity.class));
+            }
+            else if (id == R.id.nav_login)
+                startActivity(new Intent(this, LoginActivity2.class));
             else if (id == R.id.nav_help)
                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://support.strava.com")));
 

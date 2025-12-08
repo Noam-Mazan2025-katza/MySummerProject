@@ -48,7 +48,9 @@ dependencies {
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     implementation("com.github.bumptech.glide:glide:4.16.0")
+    implementation(libs.firebase.database)
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+    implementation("com.google.firebase:firebase-database:20.3.0")
 
     // אל תשאיר את זו אם היא קיימת אצלך בליין נפרד – זה יוצר כפילות:
     // implementation(libs.firebase.auth)
