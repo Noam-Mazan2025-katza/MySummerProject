@@ -13,17 +13,12 @@
         android:theme="@style/Theme.MySummerProject"
         tools:targetApi="31">
         <activity
-            android:name=".item_challenge"
-            android:exported="false" />
-        <activity
-            android:name=".challenges"
+            android:name=".ChallengesActivity"
             android:exported="false" />
         <activity
             android:name=".BaseActivity"
             android:exported="false" />
-        <activity
-            android:name=".base_layout"
-            android:exported="false" />
+
         <activity
             android:name=".MenuActivity"
             android:exported="false" />

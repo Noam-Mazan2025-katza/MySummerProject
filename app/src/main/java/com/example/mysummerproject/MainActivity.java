@@ -47,8 +47,8 @@ public class MainActivity extends BaseActivity{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        setContentView(R.layout.base_layout);
+//        setContentView(R.layout.activity_main);
+//        setContentView(R.layout.base_layout);
         setupMenu();
         setContentLayout(R.layout.activity_main);
 
@@ -93,6 +93,11 @@ public class MainActivity extends BaseActivity{
             if (id == R.id.nav_home) {
                 // בית = MainActivity
                 Intent intent = new Intent(MainActivity.this, MainActivity.class);
+                startActivity(intent);
+
+            } else if (id == R.id.nav_challenges) { //  <--  השינוי נמצא כאן
+                // מעבר למסך האתגרים
+                Intent intent = new Intent(MainActivity.this, ChallengesActivity.class);
                 startActivity(intent);
 
             } else if (id == R.id.nav_workouts) {

@@ -23,7 +23,7 @@ public class ChallengesActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_challenges); // העיצוב של המסך הראשי
+        setContentView(R.layout.challenges); // העיצוב של המסך הראשי
 
         // איתחול הרשימה
         recyclerView = findViewById(R.id.rvChallenges);
