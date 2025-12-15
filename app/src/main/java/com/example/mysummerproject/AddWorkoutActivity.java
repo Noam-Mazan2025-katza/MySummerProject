@@ -1,6 +1,7 @@
 package com.example.mysummerproject;
 
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.SeekBar;
@@ -30,7 +31,7 @@ public class AddWorkoutActivity extends BaseActivity {
 
         // ❗ רק זה! לא setContentView פעמיים
         setContentLayout(R.layout.activity_add_workout);
-
+        getWindow().getDecorView().setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
         setupMenu();
 
         spType = findViewById(R.id.spType);

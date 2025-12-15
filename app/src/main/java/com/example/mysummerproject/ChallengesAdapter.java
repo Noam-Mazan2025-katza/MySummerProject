@@ -5,6 +5,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -22,7 +23,6 @@ public class ChallengesAdapter extends RecyclerView.Adapter<ChallengesAdapter.Ch
     @NonNull
     @Override
     public ChallengeViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // כאן אנחנו מחברים את העיצוב שיצרת (activity_item_challenge.xml)
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.activity_item_challenge, parent, false);
         return new ChallengeViewHolder(view);
     }
@@ -31,16 +31,36 @@ public class ChallengesAdapter extends RecyclerView.Adapter<ChallengesAdapter.Ch
     public void onBindViewHolder(@NonNull ChallengeViewHolder holder, int position) {
         Challenge currentChallenge = challengesList.get(position);
 
-        // 1. הצגת הכותרת
+        // --- 1. הצגת נתונים בסיסיים (כותרת, תגית, נקודות) ---
         holder.tvTitle.setText(currentChallenge.getTitle());
+        holder.tvTag.setText(currentChallenge.getTag());
+        holder.tvPoints.setText("+" + currentChallenge.getPoints() + " נק'");
 
-        // 2. חיבור ל-Firebase למספר המשתתפים (לפי ה-ID של האתגר)
+        // --- 2. עיצוב דינמי לפי סוג האתגר ---
+        String tag = currentChallenge.getTag();
+        if (tag != null && tag.equals("ריצה")) {
+            holder.imgBackground.setImageResource(R.drawable.runner); // וודא שיש לך תמונה בשם runner בתיקיית drawable
+            holder.tvTag.setBackgroundColor(0xFFFF9800); // כתום
+        } else if (tag != null && tag.equals("כוח")) {
+            holder.tvTag.setBackgroundColor(0xFFF44336); // אדום
+            holder.imgBackground.setImageResource(R.drawable.images_power_training); // וודא שיש לך תמונה בשם runner בתיקיית drawable
+
+        }else if (tag.equals("יוגה")) {
+            holder.imgBackground.setImageResource(R.drawable.images_power_training); // עכשיו זה פעיל!
+            holder.tvTag.setBackgroundColor(0xFF4CAF50); // ירוק
+        }
+
+        // --- 3. ניהול ה-Progress Bar ---
+        holder.progressBar.setProgress(0);
+        holder.tvProgressValue.setText("0%");
+
+        // --- 4. חיבור ל-Firebase למספר המשתתפים ---
         DatabaseReference ref = FirebaseDatabase.getInstance()
                 .getReference("challenges")
                 .child(currentChallenge.getId())
                 .child("participants_count");
 
-        // האזנה למספר בזמן אמת (Read)
+        // האזנה למספר בזמן אמת
         ref.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -51,11 +71,12 @@ public class ChallengesAdapter extends RecyclerView.Adapter<ChallengesAdapter.Ch
                     holder.tvSubtitle.setText("היה הראשון להצטרף!");
                 }
             }
+
             @Override
             public void onCancelled(@NonNull DatabaseError error) {}
         });
 
-        // 3. לחיצה על כפתור "הצטרף" (Write)
+        // --- 5. לחיצה על כפתור "עדכן/הצטרף" ---
         holder.btnAction.setOnClickListener(v -> {
             ref.runTransaction(new Transaction.Handler() {
                 @NonNull
@@ -69,9 +90,10 @@ public class ChallengesAdapter extends RecyclerView.Adapter<ChallengesAdapter.Ch
                     }
                     return Transaction.success(currentData);
                 }
+
                 @Override
                 public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
-                    // כאן המספר כבר יתעדכן לבד בזכות ה-Listener למעלה
+                    // העדכון מתבצע אוטומטית בזכות ה-listener למעלה
                 }
             });
         });
@@ -82,20 +104,23 @@ public class ChallengesAdapter extends RecyclerView.Adapter<ChallengesAdapter.Ch
         return challengesList.size();
     }
 
-    // המחלקה שמחזיקה את הרכיבים מהעיצוב שלך
+    // --- ה-ViewHolder המעודכן ---
     public static class ChallengeViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTitle, tvSubtitle, tvTag, tvPoints;
+        TextView tvTitle, tvSubtitle, tvTag, tvPoints, tvProgressValue;
         Button btnAction;
         ImageView imgBackground;
+        ProgressBar progressBar;
 
         public ChallengeViewHolder(@NonNull View itemView) {
             super(itemView);
             tvTitle = itemView.findViewById(R.id.tvTitle);
-            tvSubtitle = itemView.findViewById(R.id.tvSubtitle); // זה הטקסט של המשתתפים
+            tvSubtitle = itemView.findViewById(R.id.tvSubtitle);
             tvTag = itemView.findViewById(R.id.tvTag);
             tvPoints = itemView.findViewById(R.id.tvPoints);
+            tvProgressValue = itemView.findViewById(R.id.tvProgressValue); // חדש
             btnAction = itemView.findViewById(R.id.btnAction);
             imgBackground = itemView.findViewById(R.id.imgBackground);
+            progressBar = itemView.findViewById(R.id.progressBar); // חדש
         }
     }
 }
