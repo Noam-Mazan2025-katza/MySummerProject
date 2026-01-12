@@ -31,7 +31,7 @@ public class AddWorkoutActivity extends BaseActivity {
 
         // ❗ רק זה! לא setContentView פעמיים
         setContentLayout(R.layout.activity_add_workout);
-        getWindow().getDecorView().setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+//        getWindow().getDecorView().setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
         setupMenu();
 
         spType = findViewById(R.id.spType);
