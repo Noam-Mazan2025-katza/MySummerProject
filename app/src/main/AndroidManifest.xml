@@ -21,9 +21,7 @@
         <activity
             android:name=".BaseActivity"
             android:exported="false" />
-        <activity
-            android:name=".MenuActivity"
-            android:exported="false" />
+
         <activity
             android:name=".Register"
             android:exported="false" />

@@ -70,58 +70,6 @@
                     android:textColor="#757575"
                     android:layout_marginTop="4dp"/>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginTop="24dp"
-                    android:background="#FAFAFA"
-                    android:padding="12dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginBottom="8dp">
-
-                        <TextView
-                            android:id="@+id/tvRankName"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="דרגה: טוען..."
-                            android:textStyle="bold"
-                            android:textColor="#3F51B5"/>
-
-                        <TextView
-                            android:id="@+id/tvPointsStatus"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="0/100"
-                            android:textSize="12sp"
-                            android:textColor="#757575"/>
-                    </LinearLayout>
-
-                    <ProgressBar
-                        android:id="@+id/pbLevel"
-                        style="?android:attr/progressBarStyleHorizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="10dp"
-                        android:progressDrawable="@android:drawable/progress_horizontal"
-                        android:progressTint="#FFC107"
-                        android:max="100"
-                        android:progress="0" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="צבור עוד נקודות כדי לעלות רמה!"
-                        android:textSize="10sp"
-                        android:gravity="center"
-                        android:layout_marginTop="4dp"
-                        android:textColor="#9E9E9E"/>
-                </LinearLayout>
-
                 <Button
                     android:id="@+id/btnEditProfile"
                     android:layout_width="wrap_content"
@@ -130,7 +78,7 @@
                     android:backgroundTint="#EEEEEE"
                     android:textColor="#333333"
                     android:textSize="12sp"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="24dp"
                     app:cornerRadius="20dp"
                     android:elevation="0dp"
                     android:stateListAnimator="@null"/>
@@ -244,45 +192,13 @@
             android:id="@+id/row2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:weightSum="2"
             android:paddingHorizontal="16dp"
             android:paddingBottom="24dp"
             app:layout_constraintTop_toBottomOf="@id/row1">
 
             <androidx.cardview.widget.CardView
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="100dp"
-                android:layout_weight="1"
-                android:layout_margin="6dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp"
-                app:cardBackgroundColor="#FFEBEE">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical">
-                    <TextView
-                        android:id="@+id/tvTotalCalories"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0"
-                        android:textSize="26sp"
-                        android:textStyle="bold"
-                        android:textColor="#C62828"/>
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="קלוריות"
-                        android:textSize="12sp"/>
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
-                android:layout_width="0dp"
-                android:layout_height="100dp"
-                android:layout_weight="1"
                 android:layout_margin="6dp"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="4dp"

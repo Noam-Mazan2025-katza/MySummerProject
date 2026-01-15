@@ -3,11 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="16dp"
-    android:layout_marginVertical="10dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="6dp"
-    app:cardBackgroundColor="#FFFFFF">
+    android:layout_margin="10dp"
+    app:cardCornerRadius="10dp"
+    app:cardElevation="4dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -16,149 +14,114 @@
         <ImageView
             android:id="@+id/imgBackground"
             android:layout_width="match_parent"
-            android:layout_height="150dp"
-            android:scaleType="centerCrop"
+            android:layout_height="140dp"
             android:src="@drawable/runner"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:scaleType="centerCrop"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
             android:id="@+id/tvTag"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
             android:text="ריצה"
             android:textColor="#FFFFFF"
             android:textSize="12sp"
             android:textStyle="bold"
             android:background="#FF9800"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="4dp"
-            android:layout_margin="12dp"
+            android:padding="5dp"
+            android:layout_margin="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <LinearLayout
+            android:orientation="vertical"
+            android:padding="10dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp"
-            app:layout_constraintBottom_toBottomOf="@id/imgBackground"
-            app:layout_constraintStart_toStartOf="parent">
+            app:layout_constraintBottom_toBottomOf="@id/imgBackground">
 
             <TextView
                 android:id="@+id/tvTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:text="אתגר סוף השבוע"
                 android:textColor="#FFFFFF"
-                android:textSize="22sp"
+                android:textSize="20sp"
                 android:textStyle="bold"
-                android:shadowColor="#000000"
-                android:shadowDx="1"
-                android:shadowDy="1"
-                android:shadowRadius="2" />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
 
             <TextView
                 android:id="@+id/tvSubtitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:text="הצטרפו ל-150 רצים נוספים"
-                android:textColor="#E0E0E0"
-                android:textSize="14sp" />
+                android:textColor="#DDDDDD"
+                android:textSize="14sp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
         </LinearLayout>
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#FAFAFA"
-            android:padding="16dp"
+            android:padding="15dp"
+            android:background="#FFFFFF"
             app:layout_constraintTop_toBottomOf="@id/imgBackground">
 
             <TextView
                 android:id="@+id/tvProgressLabel"
+                android:text="התקדמות:"
+                android:textColor="#000000"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="התקדמות אישית"
-                android:textSize="12sp"
-                android:textStyle="bold"
-                android:textColor="#424242"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"/>
+                android:layout_height="wrap_content" />
 
             <TextView
                 android:id="@+id/tvProgressValue"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:text="60%"
-                android:textSize="12sp"
                 android:textColor="#3F51B5"
                 android:textStyle="bold"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"/>
+                android:layout_alignParentEnd="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
 
             <ProgressBar
                 android:id="@+id/progressBar"
                 style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="0dp"
-                android:layout_height="10dp"
-                android:layout_marginTop="8dp"
                 android:progress="60"
-                android:progressDrawable="@android:drawable/progress_horizontal"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tvProgressLabel" />
+                android:layout_marginTop="5dp"
+                android:layout_below="@id/tvProgressLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
 
             <View
                 android:id="@+id/divider"
+                android:background="#CCCCCC"
+                android:layout_marginTop="15dp"
+                android:layout_below="@id/progressBar"
                 android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="#E0E0E0"
-                android:layout_marginTop="16dp"
-                app:layout_constraintTop_toBottomOf="@id/progressBar"/>
+                android:layout_height="1dp" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginTop="12dp"
-                app:layout_constraintTop_toBottomOf="@id/divider">
+            <TextView
+                android:id="@+id/tvPoints"
+                android:text="+500 נק'"
+                android:textColor="#4CAF50"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_below="@id/divider"
+                android:layout_marginTop="10dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
 
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+            <Button
+                android:id="@+id/btnAction"
+                android:text="עדכן"
+                android:backgroundTint="#3F51B5"
+                android:textColor="#FFFFFF"
+                android:layout_alignParentEnd="true"
+                android:layout_below="@id/divider"
+                android:layout_marginTop="5dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
 
-                    <TextView
-                        android:text="פרס סיום"
-                        android:textSize="10sp"
-                        android:textColor="#757575"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
-
-                    <TextView
-                        android:id="@+id/tvPoints"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="+500 נק'"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="#4CAF50" />
-                </LinearLayout>
-
-                <Button
-                    android:id="@+id/btnAction"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="עדכן"
-                    android:backgroundTint="#3F51B5"
-                    android:minWidth="100dp"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"/>
-
-            </LinearLayout>
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
+        </RelativeLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
