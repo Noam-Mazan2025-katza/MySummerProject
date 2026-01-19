@@ -1,145 +1,84 @@
 package com.example.mysummerproject;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import androidx.appcompat.widget.Toolbar;
-import androidx.appcompat.app.ActionBarDrawerToggle;
-
-
 import android.content.Intent;
-import android.net.Uri;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.view.*;
-import android.widget.*;
-
-import androidx.annotation.NonNull;
-
-import androidx.drawerlayout.widget.DrawerLayout;
+import android.util.Base64; // חשוב להוספת תמונות
+import android.view.View;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot; // חשוב
+import com.google.firebase.firestore.FirebaseFirestore; // חשוב
 
-public class MainActivity extends BaseActivity{
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-    private static final String TAG = "MainActivity";
-    private DrawerLayout drawerLayout;
-    private NavigationView navigationView;
-    private FirebaseAuth mAuth; // ⬅️ הועבר לפה (תיקון 1)
+public class MainActivity extends BaseActivity {
 
-    // משתנים שקשורים למשתמשים ולאימונים
+    // משתנים
+    private FirebaseAuth mAuth;
+    private FirebaseFirestore db; // הוספנו את זה בשביל למשוך נתונים
     private LinearLayout usersContainer;
+
+    // רשימות למחיקה ולטבלה (נשאיר אותן כדי שהקוד לא ישבר, אבל השימוש בהן השתנה)
     private final List<String> selectedUsers = new ArrayList<>();
     private final Set<String> selectedNames = new HashSet<>();
 
-    // רכיבים של המשתמש המחובר
+    // רכיבים במסך הראשי
     private TextView tvWelcome;
     private ImageView imgProfile;
-    private Button btnLogout;
-    private Button btnAddUser; // ⬅️ הועבר לפה (תיקון 1)
-    private Button btnAddWorkout; // ⬅️ הועבר לפה (תיקון 1)
+    private Button btnLogout, btnAddUser, btnAddWorkout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        setContentView(R.layout.activity_main);
-//        setContentView(R.layout.base_layout);
-        setupMenu();
+
+        // 1. טעינת העיצוב והפעלת התפריט דרך BaseActivity
         setContentLayout(R.layout.activity_main);
+        setupMenu();
 
-
-        // ⭐️ תיקון 2: ביטול הרווח העליון (Status Bar) ⭐️
+        // עיצוב (מחיקת סטטוס בר)
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
 
+        // 2. אתחול משתנים
+        mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance(); // אתחול מסד הנתונים
 
-        // אתחול רכיבי המסך (עכשיו כמשתני מחלקה)
         usersContainer = findViewById(R.id.usersContainer);
-        btnAddUser = findViewById(R.id.btnAddUser); // ⬅️ אתחול
-        btnAddWorkout = findViewById(R.id.btnAddWorkout); // ⬅️ אתחול
+        btnAddUser = findViewById(R.id.btnAddUser);
+        btnAddWorkout = findViewById(R.id.btnAddWorkout);
         FloatingActionButton fabDelete = findViewById(R.id.fabDelete);
-        drawerLayout = findViewById(R.id.drawerLayout);
-        navigationView = findViewById(R.id.navigationView);
-        mAuth = FirebaseAuth.getInstance(); // ⬅️ אתחול mAuth
 
-        // 🟢 רכיבי המשתמש המחובר
         tvWelcome = findViewById(R.id.tvWelcome);
         imgProfile = findViewById(R.id.imgProfile);
         btnLogout = findViewById(R.id.btnLogout);
-        // --------------------------------------------------
-        // הוספת תפריט לדף
-        // --------------------------------------------------
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawerLayout, toolbar,
-                R.string.navigation_drawer_open,
-                R.string.navigation_drawer_close);
-        drawerLayout.addDrawerListener(toggle);
-        toggle.syncState();
+        // עדכון ראשוני
+        updateUserUI();
 
-        // --------------------------------------------------
-        // חלק ניווט - לחיצה על פריטים בתפריט הצד
-        // --------------------------------------------------
-        navigationView.setNavigationItemSelectedListener(item -> {
+        // 3. כפתורים
 
-            int id = item.getItemId();
-
-            if (id == R.id.nav_home) {
-                // בית = MainActivity
-                Intent intent = new Intent(MainActivity.this, MainActivity.class);
-                startActivity(intent);
-
-            } else if (id == R.id.nav_challenges) { //  <--  השינוי נמצא כאן
-                // מעבר למסך האתגרים
-                Intent intent = new Intent(MainActivity.this, ChallengesActivity.class);
-                startActivity(intent);
-
-            } else if (id == R.id.nav_workouts) {
-                Intent intent = new Intent(MainActivity.this, AddWorkoutActivity.class);
-                startActivity(intent);
-
-            } else if (id == R.id.nav_login) {
-                Intent intent = new Intent(MainActivity.this, LoginActivity2.class);
-                startActivity(intent);
-
-            } else if (id == R.id.nav_help) {
-                Intent intent = new Intent(Intent.ACTION_VIEW,
-                        Uri.parse("https://support.strava.com"));
-                startActivity(intent);
-            }
-
-            drawerLayout.closeDrawers(); // לסגור את התפריט לאחר לחיצה
-            return true;
-        });
-
-
-        // --------------------------------------------------
-        // ⭐️ חלק א' — קריאה לפונקציית עדכון משתמש (במקום הלוגיקה המבולגנת) ⭐️
-        // --------------------------------------------------
-        updateUserUI(); // ⬅️ קריאה ראשונית לאתחול המצב
-        // --------------------------------------------------
-        // הוסר כל הבלוק if/else שהיה בבדיקת המשתמש!
-        // --------------------------------------------------
-
-
-        // --------------------------------------------------
-        // חלק ב' — פעולות התחברות / התנתקות
-        // --------------------------------------------------
+        // התנתקות
         btnLogout.setOnClickListener(v -> {
             mAuth.signOut();
-            Toast.makeText(MainActivity.this, "התנתקת בהצלחה", Toast.LENGTH_SHORT).show();
-            updateUserUI(); // ⬅️ עדכון הממשק מייד לאחר ההתנתקות
+            Toast.makeText(MainActivity.this, "התנתקת", Toast.LENGTH_SHORT).show();
+            updateUserUI();
+            setupMenu(); // מעדכן גם את התפריט בצד
+            renderLeaderboard(); // מרענן את הרשימה
         });
 
-        // --------------------------------------------------
-        // חלק ג' — ניווט בין מסכים
-        // --------------------------------------------------
         btnAddUser.setOnClickListener(v ->
                 startActivity(new Intent(MainActivity.this, LoginActivity2.class))
         );
@@ -148,151 +87,104 @@ public class MainActivity extends BaseActivity{
                 startActivity(new Intent(MainActivity.this, AddWorkoutActivity.class))
         );
 
-        // --------------------------------------------------
+        // טבלה - עכשיו טוענת מפיירבייס
         renderLeaderboard();
-        // --------------------------------------------------
-        // חלק ה' — כפתור מחיקה
-        // --------------------------------------------------
+
+        // מחיקה - כרגע רק מנקה את המסך (כי אנחנו לא מוחקים מהענן בלחיצה הזו)
         fabDelete.setOnClickListener(v -> {
-            for (String name : new ArrayList<>(selectedUsers)) {
-                PrefsRepo.removeUsers(this, Collections.singleton(name));
-            }
-            PrefsRepo.removeUsers(this, selectedNames);
-            selectedNames.clear();
-            selectedUsers.clear();
-            renderLeaderboard();
-            Toast.makeText(this, "המשתמשים נמחקו", Toast.LENGTH_SHORT).show();
+            usersContainer.removeAllViews();
+            Toast.makeText(this, "הרשימה נוקתה מהמסך", Toast.LENGTH_SHORT).show();
         });
     }
 
-    // --------------------------------------------------
-    // ⭐️ תיקון 3: רענון הנתונים ב-onResume() ⭐️
-    // --------------------------------------------------
     @Override
     protected void onResume() {
         super.onResume();
-        updateUserUI(); // ⬅️ קריאה נוספת בכל פעם שחוזרים למסך, כולל מה-LoginActivity
-        renderLeaderboard();
+        updateUserUI();
+        renderLeaderboard(); // טוען מחדש כשחוזרים
+        setupMenu();
     }
 
-    // --------------------------------------------------
-    // ⭐️ תיקון 4: פונקציית עדכון המשתמש המאוחדת ⭐️
-    // --------------------------------------------------
     private void updateUserUI() {
         FirebaseUser user = mAuth.getCurrentUser();
 
-        // רכיבים מתוך תפריט הצד (Navigation Drawer)
-        View headerView = navigationView.getHeaderView(0);
-        ImageView navProfileImage = headerView.findViewById(R.id.navHeaderProfileImage);
-        TextView navName = headerView.findViewById(R.id.navHeaderName);
-
+        // עדכון המסך הראשי בלבד (התפריט מטופל ב-BaseActivity)
         if (user != null) {
-            // משתמש מחובר
+            if (btnAddUser != null) btnAddUser.setVisibility(View.GONE);
+            if (btnLogout != null) btnLogout.setVisibility(View.VISIBLE);
 
-            // 1. הסתרת כפתור הוספת משתמש
-            if (btnAddUser != null) {
-                btnAddUser.setVisibility(View.GONE);
-            }
-
-            // 2. עדכון פרטים במסך הראשי
             String name = user.getDisplayName();
-            if (name == null || name.isEmpty()) {
-                name = user.getEmail();
-            }
-            tvWelcome.setText("שלום " + name);
-            if (user.getPhotoUrl() != null) {
-                Glide.with(this).load(user.getPhotoUrl()).placeholder(R.drawable.default_profile).into(imgProfile);
-            } else {
-                imgProfile.setImageResource(R.drawable.default_profile);
-            }
-            btnLogout.setVisibility(View.VISIBLE);
+            if (name == null || name.isEmpty()) name = user.getEmail();
 
-            // 3. עדכון פרטים בניווט צד
-            navName.setText(name);
-            if (user.getPhotoUrl() != null) {
-                Glide.with(this).load(user.getPhotoUrl()).placeholder(R.drawable.default_profile).into(navProfileImage);
-            } else {
-                navProfileImage.setImageResource(R.drawable.default_profile);
-            }
+            if (tvWelcome != null) tvWelcome.setText("שלום " + name);
 
+            if (imgProfile != null) {
+                if (user.getPhotoUrl() != null) {
+                    Glide.with(this).load(user.getPhotoUrl()).placeholder(R.drawable.default_profile).into(imgProfile);
+                } else {
+                    imgProfile.setImageResource(R.drawable.default_profile);
+                }
+            }
         } else {
-            // משתמש לא מחובר
-
-            // 1. הצגת כפתור הוספת משתמש
-            if (btnAddUser != null) {
-                btnAddUser.setVisibility(View.VISIBLE);
-            }
-
-            // 2. עדכון פרטים במסך הראשי
-            tvWelcome.setText("אין משתמש מחובר ❌");
-            imgProfile.setImageResource(R.drawable.default_profile);
-            btnLogout.setVisibility(View.GONE);
-
-            // 3. עדכון פרטים בניווט צד
-            navName.setText("אין משתמש מחובר ❌");
-            navProfileImage.setImageResource(R.drawable.default_profile);
+            if (btnAddUser != null) btnAddUser.setVisibility(View.VISIBLE);
+            if (btnLogout != null) btnLogout.setVisibility(View.GONE);
+            if (tvWelcome != null) tvWelcome.setText("אין משתמש מחובר");
+            if (imgProfile != null) imgProfile.setImageResource(R.drawable.default_profile);
         }
     }
 
-    // --------------------------------------------------
-    // חלק ז' — יצירת רשימת המשתמשים
-    // --------------------------------------------------
+    // --- הפונקציה ששונתה: טוענת מ-Firebase images ---
     private void renderLeaderboard() {
+        if (usersContainer == null) return;
+
         usersContainer.removeAllViews();
-        for (PrefsRepo.User u : PrefsRepo.getUsersSorted(this)) {
-            View card = getLayoutInflater().inflate(R.layout.view_user_card, usersContainer, false);
 
-            ImageView iv = card.findViewById(R.id.ivAvatar);
-            TextView tvName = card.findViewById(R.id.tvName);
-            TextView tvPts = card.findViewById(R.id.tvPoints);
-            TextView tvBadge = card.findViewById(R.id.tvBadge);
+        // במקום PrefsRepo, אנחנו ניגשים לתיקיית "images" בפיירבייס
+        db.collection("images").get().addOnSuccessListener(queryDocumentSnapshots -> {
 
-            tvName.setText(u.name);
-            tvPts.setText(u.points + " נק׳");
+            // עובר על כל המשתמשים שנמצאו
+            for (DocumentSnapshot doc : queryDocumentSnapshots) {
 
-            // 🔹 שימוש ב-Glide להצגת תמונת המשתמש בריבועים
-            if (u.avatarUri != null) {
-                Glide.with(this)
-                        .load(u.avatarUri)
-                        .placeholder(R.drawable.default_profile)
-                        .into(iv);
-            } else {
-                iv.setImageResource(R.drawable.default_profile);
+                // שליפת המידע
+                String name = doc.getString("name");
+                String base64Image = doc.getString("imageData"); // התמונה המוצפנת
+
+                // יצירת הכרטיס
+                View card = getLayoutInflater().inflate(R.layout.view_user_card, usersContainer, false);
+
+                ImageView iv = card.findViewById(R.id.ivAvatar);
+                TextView tvName = card.findViewById(R.id.tvName);
+                TextView tvPts = card.findViewById(R.id.tvPoints);
+                TextView tvBadge = card.findViewById(R.id.tvBadge);
+                CheckBox cb = card.findViewById(R.id.cbSelect);
+
+                tvName.setText(name);
+                tvPts.setText("0 נק׳"); // ב-Register המקורי אין נקודות, אז נשים 0 בינתיים
+                tvBadge.setVisibility(View.GONE); // נסתיר את התג בינתיים
+
+                // פענוח התמונה (כי שמרת אותה כ-Base64 ולא כ-URL)
+                if (base64Image != null && !base64Image.isEmpty()) {
+                    try {
+                        byte[] decodedString = Base64.decode(base64Image, Base64.DEFAULT);
+                        Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                        iv.setImageBitmap(decodedByte);
+                    } catch (Exception e) {
+                        iv.setImageResource(R.drawable.default_profile);
+                    }
+                } else {
+                    iv.setImageResource(R.drawable.default_profile);
+                }
+
+                // לחיצה על הכרטיס
+                card.setOnClickListener(v -> {
+                    Toast.makeText(MainActivity.this, "משתמש: " + name, Toast.LENGTH_SHORT).show();
+                });
+
+                // הוספה למסך
+                usersContainer.addView(card);
             }
-
-            tvBadge.setVisibility(u.badge ? View.VISIBLE : View.GONE);
-
-            card.setOnClickListener(v -> {
-                PrefsRepo.addPoints(this, u.name, 1);
-                renderLeaderboard();
-            });
-
-            CheckBox cb = card.findViewById(R.id.cbSelect);
-            cb.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                if (isChecked) selectedUsers.add(u.name);
-                else selectedUsers.remove(u.name);
-            });
-
-            usersContainer.addView(card);
-        }
-    }
-
-
-    // --------------------------------------------------
-    // חלק ח' — תפריט הגדרות
-    // --------------------------------------------------
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main_menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == R.id.menu_settings) {
-            // בעתיד: startActivity(new Intent(this, SettingsActivity.class));
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+        }).addOnFailureListener(e -> {
+            Toast.makeText(this, "לא הצלחתי לטעון רשימה", Toast.LENGTH_SHORT).show();
+        });
     }
 }

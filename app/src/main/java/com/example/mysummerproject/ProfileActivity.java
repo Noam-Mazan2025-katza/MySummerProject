@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -11,7 +12,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 public class ProfileActivity extends BaseActivity {
 
-    // משתנים - הורדתי את הקלוריות
+    // משתנים
     TextView tvName, tvEmail;
     TextView tvTotalMinutes, tvTotalWorkouts, tvTotalPoints;
     ImageView ivProfile;
@@ -22,21 +23,24 @@ public class ProfileActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // טעינת העיצוב והתפריט דרך BaseActivity
         setContentLayout(R.layout.activity_profile);
         setupMenu();
 
         initViews();
 
+        // אתחול פיירבייס
         db = FirebaseFirestore.getInstance();
         user = FirebaseAuth.getInstance().getCurrentUser();
 
         if (user != null) {
-            loadProfileData();
+            loadData();
+        } else {
+            Toast.makeText(this, "אין משתמש מחובר", Toast.LENGTH_SHORT).show();
         }
     }
 
     private void initViews() {
-        // חיבורים ל-XML
         tvName = findViewById(R.id.tvUserName);
         tvEmail = findViewById(R.id.tvUserEmail);
         ivProfile = findViewById(R.id.ivProfileImage);
@@ -44,43 +48,45 @@ public class ProfileActivity extends BaseActivity {
         tvTotalMinutes = findViewById(R.id.tvTotalMinutes);
         tvTotalWorkouts = findViewById(R.id.tvTotalWorkouts);
         tvTotalPoints = findViewById(R.id.tvTotalPoints);
-        // הקלוריות נמחקו מפה
     }
 
-    private void loadProfileData() {
+    private void loadData() {
         String uid = user.getUid();
 
-        db.collection("users").document(uid).get().addOnSuccessListener(documentSnapshot -> {
-            if(documentSnapshot.exists()) {
+        db.collection("users").document(uid).get().addOnSuccessListener(document -> {
+            if (document.exists()) {
 
                 // שם ואימייל
-                String name = documentSnapshot.getString("name");
+                String name = document.getString("name");
                 tvName.setText(name);
-                tvEmail.setText(documentSnapshot.getString("email"));
+                tvEmail.setText(document.getString("email"));
 
-                // נקודות - אם אין שם כלום נשים 0
-                if(documentSnapshot.get("points") != null)
-                    tvTotalPoints.setText(documentSnapshot.get("points") + "");
+                // נקודות - בדיקה פשוטה אם קיים
+                if (document.get("points") != null)
+                    tvTotalPoints.setText(document.get("points") + "");
                 else
                     tvTotalPoints.setText("0");
 
-                // דקות
-                long mins = 0;
-                if(documentSnapshot.getLong("totalMinutes") != null)
-                    mins = documentSnapshot.getLong("totalMinutes");
-                tvTotalMinutes.setText(mins + "");
+                // דקות אימון
+                if (document.get("totalMinutes") != null)
+                    tvTotalMinutes.setText(document.get("totalMinutes") + "");
+                else
+                    tvTotalMinutes.setText("0");
 
                 // מספר אימונים
-                tvTotalWorkouts.setText(documentSnapshot.get("workoutCount") + "");
+                if (document.get("workoutCount") != null)
+                    tvTotalWorkouts.setText(document.get("workoutCount") + "");
+                else
+                    tvTotalWorkouts.setText("0");
 
                 // תמונה
-                String url = documentSnapshot.getString("avatarUri");
-                if(url != null && !url.equals("")) {
-                    Glide.with(getApplicationContext()).load(url).into(ivProfile);
+                String url = document.getString("avatarUri");
+                if (url != null && !url.equals("")) {
+                    Glide.with(this).load(url).into(ivProfile);
                 }
             }
         }).addOnFailureListener(e -> {
-            Toast.makeText(ProfileActivity.this, "לא הצלחתי לטעון", Toast.LENGTH_SHORT).show();
+            Toast.makeText(ProfileActivity.this, "שגיאה בטעינה", Toast.LENGTH_SHORT).show();
         });
     }
 }

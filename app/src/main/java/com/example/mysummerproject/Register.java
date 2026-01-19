@@ -14,27 +14,24 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.FirebaseNetworkException;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
-import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Register extends BaseActivity {
 
@@ -45,20 +42,16 @@ public class Register extends BaseActivity {
 
     private FirebaseAuth refAuth;
     private ProgressDialog pd;
-
     private FirebaseFirestore db;
-    private CollectionReference refImages;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
 
-
-        setContentView(R.layout.activity_register);
-        setContentView(R.layout.base_layout);
-        setupMenu();
+        // טעינת העיצוב
         setContentLayout(R.layout.activity_register);
+        setupMenu();
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -66,6 +59,7 @@ public class Register extends BaseActivity {
             return insets;
         });
 
+        // חיבור רכיבים
         etName = findViewById(R.id.etName);
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
@@ -73,13 +67,14 @@ public class Register extends BaseActivity {
         btnRegister = findViewById(R.id.btnRegister);
         imgProfile = findViewById(R.id.imgProfile);
 
+        // פיירבייס
         refAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
-        refImages = db.collection("images");
 
+        // דיאלוג המתנה
         pd = new ProgressDialog(this);
-        pd.setTitle("Connecting");
-        pd.setMessage("Creating user...");
+        pd.setTitle("מתחבר...");
+        pd.setMessage("יוצר משתמש, רק רגע");
 
         btnSelectImage.setOnClickListener(v -> selectImage());
         btnRegister.setOnClickListener(v -> createUser());
@@ -97,7 +92,6 @@ public class Register extends BaseActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 100 && resultCode == RESULT_OK && data != null && data.getData() != null) {
             imageUri = data.getData();
-            Log.d("Register", "Selected image URI: " + imageUri.toString());
             imgProfile.setImageURI(imageUri);
         }
     }
@@ -108,122 +102,95 @@ public class Register extends BaseActivity {
         String pass = etPassword.getText().toString().trim();
 
         if (email.isEmpty() || pass.isEmpty() || name.isEmpty()) {
-            Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "חסרים פרטים!", Toast.LENGTH_SHORT).show();
             return;
         }
 
         pd.show();
 
+        // 1. יצירת משתמש ב-Auth (אימייל וסיסמה)
         refAuth.createUserWithEmailAndPassword(email, pass)
                 .addOnCompleteListener(task -> {
-                    pd.dismiss();
                     if (task.isSuccessful()) {
                         FirebaseUser user = refAuth.getCurrentUser();
-                        if (user != null) {
-                            if (imageUri != null) {
-                                saveImageAndProfile(user, name);
-                            } else {
-                                updateUserProfile(user, name, null);
-                            }
-                            Toast.makeText(Register.this, "User created successfully", Toast.LENGTH_SHORT).show();
-                        }
+                        // 2. שמירת הנתונים ב-Firestore
+                        saveUserToFirestore(user, name);
                     } else {
+                        pd.dismiss();
+                        // טיפול בשגיאות
                         Exception exp = task.getException();
-                        if (exp instanceof FirebaseAuthWeakPasswordException) {
-                            Toast.makeText(this, "Password too weak", Toast.LENGTH_SHORT).show();
-                        } else if (exp instanceof FirebaseAuthUserCollisionException) {
-                            Toast.makeText(this, "User already exists", Toast.LENGTH_SHORT).show();
-                        } else if (exp instanceof FirebaseAuthInvalidCredentialsException) {
-                            Toast.makeText(this, "Invalid email address", Toast.LENGTH_SHORT).show();
-                        } else if (exp instanceof FirebaseNetworkException) {
-                            Toast.makeText(this, "Network error. Check connection.", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(this, "Error: " + exp.getMessage(), Toast.LENGTH_LONG).show();
-                        }
+                        if (exp instanceof FirebaseAuthWeakPasswordException)
+                            Toast.makeText(this, "סיסמה חלשה מדי", Toast.LENGTH_SHORT).show();
+                        else if (exp instanceof FirebaseAuthUserCollisionException)
+                            Toast.makeText(this, "המייל הזה כבר קיים", Toast.LENGTH_SHORT).show();
+                        else
+                            Toast.makeText(this, "שגיאה: " + exp.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
     }
 
-    private void saveImageAndProfile(FirebaseUser user, String name) {
-        try {
-            InputStream inputStream = getContentResolver().openInputStream(imageUri);
-            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-            byte[] compressed = compressImage(bitmap);
+    private void saveUserToFirestore(FirebaseUser user, String name) {
+        String base64Image = "";
 
-            String base64Image = Base64.encodeToString(compressed, Base64.DEFAULT);
-
-            refImages.document(user.getUid())
-                    .set(new UserImage(name, user.getEmail(), base64Image))
-                    .addOnSuccessListener(aVoid -> {
-                        updateUserProfile(user, name, imageUri.toString()); // ✅ עדכון הפרופיל כולל שמירה בלוקל
-                        Toast.makeText(this, "Image uploaded to Firestore!", Toast.LENGTH_SHORT).show();
-                    })
-
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(this, "Failed to upload image: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        updateUserProfile(user, name, imageUri.toString());
-                    });
-
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Failed to read image: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            updateUserProfile(user, name, null);
+        // אם נבחרה תמונה, נמיר אותה ל-Base64
+        if (imageUri != null) {
+            try {
+                InputStream inputStream = getContentResolver().openInputStream(imageUri);
+                Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+                base64Image = encodeImage(bitmap);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
+
+        // הכנת המידע לשמירה (מפה במקום מחלקה, יותר גמיש)
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("name", name);
+        userData.put("email", user.getEmail());
+        userData.put("avatarUri", imageUri != null ? imageUri.toString() : ""); // כתובת מקומית
+        userData.put("imageBase64", base64Image); // התמונה עצמה
+
+        // --- הנתונים החדשים שלנו לפרופיל ---
+        userData.put("points", 0);        // ניקוד התחלתי
+        userData.put("totalMinutes", 0);  // דקות התחלתיות
+        userData.put("workoutCount", 0);  // מספר אימונים התחלתי
+
+        // שמירה בתוך תיקיית "users" עם ה-UID של המשתמש
+        db.collection("users").document(user.getUid())
+                .set(userData)
+                .addOnSuccessListener(aVoid -> {
+                    // עדכון הפרופיל הבסיסי של פיירבייס (בשביל התפריט צד וכו')
+                    updateUserProfile(user, name);
+                })
+                .addOnFailureListener(e -> {
+                    pd.dismiss();
+                    Toast.makeText(this, "נרשם, אך נכשל בשמירת נתונים", Toast.LENGTH_SHORT).show();
+                });
     }
 
-    private byte[] compressImage(Bitmap imageBitmap) {
+    // המרת תמונה לטקסט (Base64)
+    private String encodeImage(Bitmap bitmap) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-        byte[] imageBytes = baos.toByteArray();
-        int maxSize = 1_048_576; // 1MB
-        int quality = 100;
-        while (imageBytes.length > maxSize && quality > 5) {
-            baos.reset();
-            quality -= 5;
-            imageBitmap.compress(Bitmap.CompressFormat.JPEG, quality, baos);
-            imageBytes = baos.toByteArray();
-        }
-        return imageBytes;
+        // דחיסה כדי לא לתפוס המון מקום
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos);
+        byte[] bytes = baos.toByteArray();
+        return Base64.encodeToString(bytes, Base64.DEFAULT);
     }
 
-    private void updateUserProfile(FirebaseUser user, String name, String photoUrl) {
+    private void updateUserProfile(FirebaseUser user, String name) {
         UserProfileChangeRequest.Builder builder = new UserProfileChangeRequest.Builder()
                 .setDisplayName(name);
 
-        if (photoUrl != null && !photoUrl.isEmpty()) {
-            builder.setPhotoUri(Uri.parse(photoUrl));
+        if (imageUri != null) {
+            builder.setPhotoUri(imageUri);
         }
 
         user.updateProfile(builder.build())
                 .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        user.reload();
-                        Toast.makeText(this, "Profile updated successfully!", Toast.LENGTH_SHORT).show();
-
-                        // שמירה בלוקל עם הכתובת הנכונה של התמונה
-                        PrefsRepo.addUser(this, name, photoUrl != null ? Uri.parse(photoUrl) : null);
-                        PrefsRepo.addPoints(this, name, 0);
-                        PrefsRepo.setBadge(this, name, false);
-
-
-                        startActivity(new Intent(Register.this, MainActivity.class));
-                        finish();
-                    }
+                    pd.dismiss();
+                    Toast.makeText(this, "נרשמת בהצלחה!", Toast.LENGTH_SHORT).show();
+                    startActivity(new Intent(Register.this, MainActivity.class));
+                    finish();
                 });
-    }
-
-
-    // 🔹 מחלקה פנימית עבור שמירת נתוני משתמש + תמונה ב-Firestore
-    private static class UserImage {
-        public String name;
-        public String email;
-        public String imageData; // Base64
-        public UserImage() {}
-        public UserImage(String name, String email, String imageData) {
-            this.name = name;
-            this.email = email;
-            this.imageData = imageData;
-        }
     }
 }
