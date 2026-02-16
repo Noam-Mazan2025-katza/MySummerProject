@@ -132,7 +132,6 @@ public class Register extends BaseActivity {
     private void saveUserToFirestore(FirebaseUser user, String name) {
         String base64Image = "";
 
-        // אם נבחרה תמונה, נמיר אותה ל-Base64
         if (imageUri != null) {
             try {
                 InputStream inputStream = getContentResolver().openInputStream(imageUri);
@@ -143,28 +142,26 @@ public class Register extends BaseActivity {
             }
         }
 
-        // הכנת המידע לשמירה (מפה במקום מחלקה, יותר גמיש)
         Map<String, Object> userData = new HashMap<>();
         userData.put("name", name);
         userData.put("email", user.getEmail());
-        userData.put("avatarUri", imageUri != null ? imageUri.toString() : ""); // כתובת מקומית
-        userData.put("imageBase64", base64Image); // התמונה עצמה
 
-        // --- הנתונים החדשים שלנו לפרופיל ---
-        userData.put("points", 0);        // ניקוד התחלתי
-        userData.put("totalMinutes", 0);  // דקות התחלתיות
-        userData.put("workoutCount", 0);  // מספר אימונים התחלתי
+        // --- שינוי 1: שיניתי את המפתח ל-imageData כדי שיתאים ל-MainActivity ---
+        userData.put("imageData", base64Image);
 
-        // שמירה בתוך תיקיית "users" עם ה-UID של המשתמש
+        userData.put("points", 0);
+        userData.put("totalMinutes", 0);
+        userData.put("workoutCount", 0);
+
+        // --- שינוי 2: אנחנו שומרים בתיקיית "users" (וודא שגם ב-Main המאזין הוא ל-"users") ---
         db.collection("users").document(user.getUid())
                 .set(userData)
                 .addOnSuccessListener(aVoid -> {
-                    // עדכון הפרופיל הבסיסי של פיירבייס (בשביל התפריט צד וכו')
                     updateUserProfile(user, name);
                 })
                 .addOnFailureListener(e -> {
                     pd.dismiss();
-                    Toast.makeText(this, "נרשם, אך נכשל בשמירת נתונים", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "שגיאה בשמירת נתונים", Toast.LENGTH_SHORT).show();
                 });
     }
 

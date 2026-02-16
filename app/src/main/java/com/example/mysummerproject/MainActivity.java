@@ -4,10 +4,9 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.util.Base64; // חשוב להוספת תמונות
+import android.util.Base64;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -17,26 +16,21 @@ import com.bumptech.glide.Glide;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentSnapshot; // חשוב
-import com.google.firebase.firestore.FirebaseFirestore; // חשוב
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.SetOptions;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends BaseActivity {
 
-    // משתנים
     private FirebaseAuth mAuth;
-    private FirebaseFirestore db; // הוספנו את זה בשביל למשוך נתונים
+    private FirebaseFirestore db;
     private LinearLayout usersContainer;
+    private ListenerRegistration usersListener;
 
-    // רשימות למחיקה ולטבלה (נשאיר אותן כדי שהקוד לא ישבר, אבל השימוש בהן השתנה)
-    private final List<String> selectedUsers = new ArrayList<>();
-    private final Set<String> selectedNames = new HashSet<>();
-
-    // רכיבים במסך הראשי
     private TextView tvWelcome;
     private ImageView imgProfile;
     private Button btnLogout, btnAddUser, btnAddWorkout;
@@ -45,16 +39,13 @@ public class MainActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // 1. טעינת העיצוב והפעלת התפריט דרך BaseActivity
         setContentLayout(R.layout.activity_main);
         setupMenu();
 
-        // עיצוב (מחיקת סטטוס בר)
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
 
-        // 2. אתחול משתנים
         mAuth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance(); // אתחול מסד הנתונים
+        db = FirebaseFirestore.getInstance();
 
         usersContainer = findViewById(R.id.usersContainer);
         btnAddUser = findViewById(R.id.btnAddUser);
@@ -65,126 +56,115 @@ public class MainActivity extends BaseActivity {
         imgProfile = findViewById(R.id.imgProfile);
         btnLogout = findViewById(R.id.btnLogout);
 
-        // עדכון ראשוני
         updateUserUI();
 
-        // 3. כפתורים
-
-        // התנתקות
         btnLogout.setOnClickListener(v -> {
             mAuth.signOut();
-            Toast.makeText(MainActivity.this, "התנתקת", Toast.LENGTH_SHORT).show();
             updateUserUI();
-            setupMenu(); // מעדכן גם את התפריט בצד
-            renderLeaderboard(); // מרענן את הרשימה
+            setupMenu();
         });
 
-        btnAddUser.setOnClickListener(v ->
-                startActivity(new Intent(MainActivity.this, LoginActivity2.class))
-        );
+        btnAddUser.setOnClickListener(v -> startActivity(new Intent(this, LoginActivity2.class)));
+        btnAddWorkout.setOnClickListener(v -> startActivity(new Intent(this, AddWorkoutActivity.class)));
 
-        btnAddWorkout.setOnClickListener(v ->
-                startActivity(new Intent(MainActivity.this, AddWorkoutActivity.class))
-        );
+        // הפעלת המאזין
+        startListening();
 
-        // טבלה - עכשיו טוענת מפיירבייס
-        renderLeaderboard();
+        fabDelete.setOnClickListener(v -> Toast.makeText(this, "מחיקה תתבצע דרך פיירבייס", Toast.LENGTH_SHORT).show());
+    }
 
-        // מחיקה - כרגע רק מנקה את המסך (כי אנחנו לא מוחקים מהענן בלחיצה הזו)
-        fabDelete.setOnClickListener(v -> {
-            usersContainer.removeAllViews();
-            Toast.makeText(this, "הרשימה נוקתה מהמסך", Toast.LENGTH_SHORT).show();
-        });
+    private void startListening() {
+        if (usersContainer == null) return;
+
+        // --- שינוי 1: הוספנו .orderBy כדי שהטבלה תהיה ממוינת לפי נקודות (מהגבוה לנמוך) ---
+        usersListener = db.collection("users")
+                .orderBy("points", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null) {
+                        android.util.Log.e("Firebase", "Error listening", e);
+                        return;
+                    }
+
+                    if (snapshots != null) {
+                        usersContainer.removeAllViews();
+
+                        for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                            String uid = doc.getId();
+                            String name = doc.getString("name");
+                            String base64Image = doc.getString("imageData");
+
+                            // שליפת נקודות
+                            long pts = 0;
+                            if (doc.contains("points") && doc.get("points") != null) {
+                                pts = doc.getLong("points");
+                            }
+
+                            View card = getLayoutInflater().inflate(R.layout.view_user_card, usersContainer, false);
+                            ImageView iv = card.findViewById(R.id.ivAvatar);
+                            TextView tvName = card.findViewById(R.id.tvName);
+                            TextView tvPts = card.findViewById(R.id.tvPoints);
+
+                            tvName.setText(name);
+                            tvPts.setText(pts + " נק׳");
+
+                            // הצגת תמונה (כבר עובד לך)
+                            if (base64Image != null && !base64Image.isEmpty()) {
+                                try {
+                                    byte[] decodedString = android.util.Base64.decode(base64Image, android.util.Base64.DEFAULT);
+                                    android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                                    iv.setImageBitmap(bitmap);
+                                } catch (Exception ex) {
+                                    iv.setImageResource(R.drawable.default_profile);
+                                }
+                            }
+
+                            // --- שינוי 2: עדכון נקודות חכם ---
+                            card.setOnClickListener(v -> {
+                                // שימוש ב-FieldValue.increment(1) - הדרך הכי בטוחה להוסיף נקודות
+                                db.collection("users").document(uid)
+                                        .update("points", com.google.firebase.firestore.FieldValue.increment(1))
+                                        .addOnSuccessListener(aVoid -> {
+                                            Toast.makeText(this, "נוספה נקודה ל-" + name, Toast.LENGTH_SHORT).show();
+                                        });
+                            });
+
+                            usersContainer.addView(card);
+                        }
+                    }
+                });
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         updateUserUI();
-        renderLeaderboard(); // טוען מחדש כשחוזרים
-        setupMenu();
+        if (usersListener == null) startListening();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (usersListener != null) {
+            usersListener.remove();
+            usersListener = null;
+        }
     }
 
     private void updateUserUI() {
         FirebaseUser user = mAuth.getCurrentUser();
-
-        // עדכון המסך הראשי בלבד (התפריט מטופל ב-BaseActivity)
         if (user != null) {
             if (btnAddUser != null) btnAddUser.setVisibility(View.GONE);
             if (btnLogout != null) btnLogout.setVisibility(View.VISIBLE);
-
-            String name = user.getDisplayName();
-            if (name == null || name.isEmpty()) name = user.getEmail();
-
-            if (tvWelcome != null) tvWelcome.setText("שלום " + name);
-
+            tvWelcome.setText("שלום " + (user.getDisplayName() != null ? user.getDisplayName() : user.getEmail()));
             if (imgProfile != null) {
-                if (user.getPhotoUrl() != null) {
-                    Glide.with(this).load(user.getPhotoUrl()).placeholder(R.drawable.default_profile).into(imgProfile);
-                } else {
-                    imgProfile.setImageResource(R.drawable.default_profile);
-                }
+                if (user.getPhotoUrl() != null) Glide.with(this).load(user.getPhotoUrl()).into(imgProfile);
+                else imgProfile.setImageResource(R.drawable.default_profile);
             }
         } else {
             if (btnAddUser != null) btnAddUser.setVisibility(View.VISIBLE);
             if (btnLogout != null) btnLogout.setVisibility(View.GONE);
-            if (tvWelcome != null) tvWelcome.setText("אין משתמש מחובר");
-            if (imgProfile != null) imgProfile.setImageResource(R.drawable.default_profile);
+            tvWelcome.setText("אין משתמש מחובר");
+            imgProfile.setImageResource(R.drawable.default_profile);
         }
-    }
-
-    // --- הפונקציה ששונתה: טוענת מ-Firebase images ---
-    private void renderLeaderboard() {
-        if (usersContainer == null) return;
-
-        usersContainer.removeAllViews();
-
-        // במקום PrefsRepo, אנחנו ניגשים לתיקיית "images" בפיירבייס
-        db.collection("images").get().addOnSuccessListener(queryDocumentSnapshots -> {
-
-            // עובר על כל המשתמשים שנמצאו
-            for (DocumentSnapshot doc : queryDocumentSnapshots) {
-
-                // שליפת המידע
-                String name = doc.getString("name");
-                String base64Image = doc.getString("imageData"); // התמונה המוצפנת
-
-                // יצירת הכרטיס
-                View card = getLayoutInflater().inflate(R.layout.view_user_card, usersContainer, false);
-
-                ImageView iv = card.findViewById(R.id.ivAvatar);
-                TextView tvName = card.findViewById(R.id.tvName);
-                TextView tvPts = card.findViewById(R.id.tvPoints);
-                TextView tvBadge = card.findViewById(R.id.tvBadge);
-                CheckBox cb = card.findViewById(R.id.cbSelect);
-
-                tvName.setText(name);
-                tvPts.setText("0 נק׳"); // ב-Register המקורי אין נקודות, אז נשים 0 בינתיים
-                tvBadge.setVisibility(View.GONE); // נסתיר את התג בינתיים
-
-                // פענוח התמונה (כי שמרת אותה כ-Base64 ולא כ-URL)
-                if (base64Image != null && !base64Image.isEmpty()) {
-                    try {
-                        byte[] decodedString = Base64.decode(base64Image, Base64.DEFAULT);
-                        Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
-                        iv.setImageBitmap(decodedByte);
-                    } catch (Exception e) {
-                        iv.setImageResource(R.drawable.default_profile);
-                    }
-                } else {
-                    iv.setImageResource(R.drawable.default_profile);
-                }
-
-                // לחיצה על הכרטיס
-                card.setOnClickListener(v -> {
-                    Toast.makeText(MainActivity.this, "משתמש: " + name, Toast.LENGTH_SHORT).show();
-                });
-
-                // הוספה למסך
-                usersContainer.addView(card);
-            }
-        }).addOnFailureListener(e -> {
-            Toast.makeText(this, "לא הצלחתי לטעון רשימה", Toast.LENGTH_SHORT).show();
-        });
     }
 }
